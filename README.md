@@ -16,16 +16,33 @@ The entire environment runs locally using Docker.
 ## Architecture
 
 ```text
-Docker Compose
+EXPENSEFLOW
 │
-├── postgres (PostgreSQL 16)
-│     └── Stores users, employees, claims
+├── db/
+│   └── bootstrap/
+│       └── 001_expenseflow_bootstrap.sql
 │
-├── db-preflight (one-shot container)
-│     └── Applies schema + ensures default admin exists
+├── flows/
+│   ├── Admin — Rotate Token (POST).json
+│   ├── Employee dashboard (GET).json
+│   ├── ExpenseFlow - Admin - Create Employee (GET).json
+│   ├── ExpenseFlow - Admin - Create Employee (POST).json
+│   ├── ExpenseFlow - Get Claim Form (GET).json
+│   ├── ExpenseFlow - Submit Claim (POST).json
+│   ├── ExpenseFlow - Supervisor Decision (POST).json
+│   ├── ExpenseFlow — Admin — Delete User (POST).json
+│   ├── ExpenseFlow — Admin — Toggle Active (POST).json
+│   ├── ExpenseFlow — Admin — Update Role (POST).json
+│   ├── ExpenseFlow — Admin Dashboard (GET).json
+│   ├── ExpenseFlow — Auth — Login (GET).json
+│   ├── ExpenseFlow — Auth — Login (POST).json
+│   ├── ExpenseFlow — Auth — Logout (GET).json
+│   └── Supervisor dashboard (GET).json
 │
-└── n8n
-      └── Hosts workflow logic and UI
+├── .gitignore
+├── docker-compose.yml
+└── README.md
+
 ```
 
 
