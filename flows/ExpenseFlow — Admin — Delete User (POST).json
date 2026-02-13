@@ -1,0 +1,414 @@
+{
+  "name": "ExpenseFlow — Admin — Delete User (POST)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/expenseflow/admin/user/delete-user",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2128,
+        -112
+      ],
+      "id": "46032ceb-c129-488f-bd06-1084a192a013",
+      "name": "Webhook",
+      "webhookId": "ee762392-9b92-445b-bb9f-446e4872f759"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "{\n  \"status\": \"error\",\n  \"message\": \"Access denied. This area is restricted to administrators only / Token is invalid\"\n}\n",
+        "options": {
+          "responseCode": 401,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -1264,
+        160
+      ],
+      "id": "f609fda1-dac6-4935-9b6f-107725beea57",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "{\n  \"status\": \"error\",\n  \"message\": \"Access denied. This area is restricted to administrators only / Token is invalid\"\n}\n",
+        "options": {
+          "responseCode": 403,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -384,
+        32
+      ],
+      "id": "738c3158-864a-40ac-b7de-209ee679048d",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.ok ? (\"OK: \" + ($json.new_active ? \"activated\" : \"deactivated\") + \" \" + $json.subject_email) : (\"ERR: \" + ($json.user_exists ? ($json.not_self ? \"update failed\" : \"cannot change yourself\") : \"user not found\")) }}\n",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -96,
+        -208
+      ],
+      "id": "e0d93939-7a5a-4b30-adc8-d470ec5b0483",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0537394a-faab-4d6e-bdac-26dcbdae38ef",
+              "name": "token",
+              "value": "={{ ($json.query.token || '').replace(/^\"+|\"+$/g,'').replace(/\\\\\"/g,'').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "ea10d6ee-a212-46b6-9cb0-a1869f00608c",
+              "name": "target_email",
+              "value": "={{ String($json.body?.email ?? '').trim().toLowerCase() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1840,
+        -112
+      ],
+      "id": "443d6b87-679d-46ab-b5ea-04e78c334dcf",
+      "name": "Normalize Target Email"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c9a9c0b6-4f12-4243-b7d9-2ba1c41c3b74",
+              "leftValue": "={{$json.token}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1536,
+        -112
+      ],
+      "id": "093efa06-ebdf-4fbf-9c1f-d58aebf5a1b6",
+      "name": "Token Present"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH u AS (\n  SELECT email, name, role, token, active\n  FROM users\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n  LIMIT 1\n),\nslide AS (\n  UPDATE users\n  SET token_expires_at = NOW() + INTERVAL '30 minutes'\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n    AND EXISTS (SELECT 1 FROM u)\n  RETURNING 1\n)\nSELECT\n  (u.email IS NOT NULL) AS ok,\n  u.email,\n  u.name,\n  u.role,\n  u.token,\n  u.active\nFROM (SELECT 1) dummy\nLEFT JOIN u ON true;\n",
+        "options": {
+          "queryReplacement": "={{ $json.token }}\n"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1216,
+        -112
+      ],
+      "id": "b7c4a527-0604-4aee-a753-7b679dfb1f24",
+      "name": "Validate Token & Extend",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "38728fcc-fa76-4ffa-8dc1-fa44f0f60051",
+              "name": "admin_email",
+              "value": "={{$json.email}}",
+              "type": "string"
+            },
+            {
+              "id": "c87d5cdd-f4aa-44b6-a8c3-d74cfc224331",
+              "name": "admin_name",
+              "value": "={{$json.name}}",
+              "type": "string"
+            },
+            {
+              "id": "340171a0-359f-4069-8387-e444608187b8",
+              "name": "current_user_role",
+              "value": "={{$json.role}}",
+              "type": "string"
+            },
+            {
+              "id": "767eaf3e-7841-4cb6-aa3e-c10463975141",
+              "name": "token",
+              "value": "={{$json.token}}",
+              "type": "string"
+            },
+            {
+              "id": "9f595a66-e8cc-413a-997b-113d9ca9a192",
+              "name": "current_user_active",
+              "value": "={{$json.active}}",
+              "type": "string"
+            },
+            {
+              "id": "6de177ff-2b73-4b36-97b9-be0959d88ff0",
+              "name": "target_email",
+              "value": "={{ $node[\"Normalize Target Email\"].json.target_email }}",
+              "type": "string"
+            },
+            {
+              "id": "e9d155cc-6356-4449-b540-59ccc72eb55e",
+              "name": "ok",
+              "value": "={{ $json.ok }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -912,
+        -112
+      ],
+      "id": "9901f31f-5cc6-43e3-8482-8db8b15f5196",
+      "name": "Prepare Delete Target Context"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0e2dccb1-fca0-42dd-8724-c9f5c379a670",
+              "leftValue": "={{$json.current_user_role}}",
+              "rightValue": "ADMIN",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "269a824e-fca9-46a3-827a-8b3a1ef08892",
+              "leftValue": "={{$json.ok}}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -608,
+        -112
+      ],
+      "id": "e43b01b6-19b8-494d-b09e-4cf863674689",
+      "name": "Permission Check"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH subject AS (\n  SELECT email\n  FROM users\n  WHERE lower(email) = lower($1)\n  LIMIT 1\n),\nguard AS (\n  SELECT\n    EXISTS(SELECT 1 FROM subject) AS user_exists,\n    (lower($1) <> lower($2)) AS not_self\n),\ndel_claims AS (\n  DELETE FROM claims\n  WHERE lower(employee_email) = lower($1)\n     OR lower(approver_email) = lower($1)\n  RETURNING 1\n),\ndo_delete AS (\n  DELETE FROM users\n  WHERE lower(email) = lower($1)\n    AND (lower($1) <> lower($2))\n  RETURNING email\n)\nSELECT\n  (SELECT user_exists FROM guard) AS user_exists,\n  (SELECT not_self FROM guard) AS not_self,\n  EXISTS(SELECT 1 FROM do_delete) AS ok,\n  lower($1)::text AS subject_email;\n",
+        "options": {
+          "queryReplacement": "={{ $json.target_email }}\n{{ $json.admin_email }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -400,
+        -208
+      ],
+      "id": "08dd9c23-e870-4cf1-9de8-a434e2b6c785",
+      "name": "Delete User + Claims",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Target Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Target Email": {
+      "main": [
+        [
+          {
+            "node": "Token Present",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Present": {
+      "main": [
+        [
+          {
+            "node": "Validate Token & Extend",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Token & Extend": {
+      "main": [
+        [
+          {
+            "node": "Prepare Delete Target Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Delete Target Context": {
+      "main": [
+        [
+          {
+            "node": "Permission Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Permission Check": {
+      "main": [
+        [
+          {
+            "node": "Delete User + Claims",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete User + Claims": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "f63893f0-41ab-4b91-ad1e-fadae8903bff",
+  "meta": {
+    "instanceId": "ed78ae6e681edbfae313d0e8063f75c68ae48b9e68d4728e17cb5150634a5de7"
+  },
+  "id": "nNNL2ToLURa0Eu9qjqrnf",
+  "tags": []
+}

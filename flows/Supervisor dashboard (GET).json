@@ -1,0 +1,392 @@
+{
+  "name": "Supervisor dashboard (GET)",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "app/expenseflow/supervisor/dashboard",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "843c8c53-48b6-44d8-9163-4d0946002fb6",
+      "name": "Webhook",
+      "webhookId": "f242622b-f8c9-4f4c-bca4-09e4c364b894"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <title>403 – Access Denied</title>\n\n    <style>\n      :root {\n        --bg: #f5f7fb;\n        --card: #ffffff;\n        --text: #1f2937;\n        --muted: #6b7280;\n        --accent: #ef4444;\n      }\n\n      * {\n        box-sizing: border-box;\n      }\n\n      body {\n        margin: 0;\n        min-height: 100vh;\n        font-family: system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n          Roboto, sans-serif;\n        background: var(--bg);\n        display: flex;\n        align-items: center;\n        justify-content: center;\n        padding: 24px;\n        color: var(--text);\n      }\n\n      .card {\n        background: var(--card);\n        padding: 36px 40px;\n        border-radius: 16px;\n        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.08);\n        text-align: center;\n        max-width: 420px;\n        width: 100%;\n      }\n\n      .code {\n        font-size: 3.2rem;\n        font-weight: 800;\n        color: var(--accent);\n        margin-bottom: 8px;\n      }\n\n      h1 {\n        font-size: 1.5rem;\n        margin: 0 0 10px;\n      }\n\n      p {\n        margin: 0;\n        color: var(--muted);\n        font-size: 0.95rem;\n        line-height: 1.5;\n      }\n    </style>\n  </head>\n\n  <body>\n    <div class=\"card\">\n      <div class=\"code\">403</div>\n      <h1>Access denied</h1>\n      <p>Token Is Invalid.</p>\n    </div>\n  </body>\n</html>\n",
+        "options": {
+          "responseCode": 403,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1376,
+        48
+      ],
+      "id": "315d6a6a-2ae6-410b-9cbd-2a6ad91c1985",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const token =\n  $node[\"Token Normalization \"]?.json?.token_clean ||\n  $node[\"Token Normalization \"]?.json?.token ||\n  $json?.query?.token ||\n  \"\";\n\nconst auth = $node[\"Validate Token + Refresh Expiry1\"]?.json || {};\nconst name = auth.name || \"\";\nconst email = auth.email || \"\";\nconst role = auth.role || \"\";\n\nconst decisionBaseUrl =\n  `http://localhost:5678/webhook/expenseflow/supervisor/decision?token=${encodeURIComponent(token)}`;\n\nconst rows = $node[\"Load Assigned Claims\"]?.json?.claims || [];\n\nconst dashboardUrl =\n  `http://localhost:5678/webhook/app/expenseflow/supervisor/dashboard?token=${encodeURIComponent(token)}`;\n\nconst loginUrl =\n  `http://localhost:5678/webhook/app/expenseflow/login`;\n\nconst fmtDate = (v) => {\n  if (!v) return \"\";\n  return String(v).replace(\"T\", \" \").replace(\"Z\", \"\");\n};\n\nconst badgeClass = (s) => {\n  if (s === \"APPROVED\") return \"approved\";\n  if (s === \"REJECTED\" || s === \"DECLINED\") return \"declined\";\n  return \"submitted\";\n};\n\nconst total = rows.length;\nconst submitted = rows.filter(\n  (r) => r.status === \"PENDING\" || r.status === \"SUBMITTED\"\n).length;\nconst approved = rows.filter((r) => r.status === \"APPROVED\").length;\nconst rejected = rows.filter(\n  (r) => r.status === \"REJECTED\" || r.status === \"DECLINED\"\n).length;\n\nconst esc = (x) => {\n  const s = (x ?? \"\").toString();\n  return s\n    .replace(/&/g, \"&amp;\")\n    .replace(/</g, \"&lt;\")\n    .replace(/>/g, \"&gt;\")\n    .replace(/\"/g, \"&quot;\")\n    .replace(/'/g, \"&#39;\");\n};\n\nconst css = `\n<style>\n  :root{\n    --bg:#f6f7fb;\n    --card:#ffffff;\n    --text:#0f172a;\n    --muted:#64748b;\n    --border:#e7eaf3;\n    --shadow:0 10px 30px rgba(15, 23, 42, 0.08);\n    --primary:#4f46e5;\n    --primary2:#4338ca;\n    --chip:#eef2ff;\n  }\n  *{ box-sizing:border-box; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }\n  body{ margin:0; background:var(--bg); color:var(--text); }\n\n  .pageTop{\n    max-width: 1320px;\n    margin: 18px auto 0;\n    padding: 0 18px;\n    display:flex;\n    align-items:center;\n    justify-content:space-between;\n    gap:16px;\n  }\n\n  .logo { display: flex; align-items: center; }\n  .logo svg { height: 42px; }\n  .logo text { letter-spacing: 0.5px; }\n\n  .logoutBtn{\n    display:inline-flex;\n    align-items:center;\n    justify-content:center;\n    padding: 10px 20px;\n    border-radius: 12px;\n    border: none;\n    border-radius: 5px;\n    background: linear-gradient(180deg, var(--primary), var(--primary2));\n    color: white;\n    cursor: pointer;\n    text-decoration:none;\n    font-weight: 900;\n    font-size: 14px;\n    transition: background-color 0.3s ease;\n  }\n \n\n  .wrap{ max-width: 1320px; margin: 48px auto; padding: 0 18px; }\n  .card{\n    background:var(--card);\n    border:1px solid var(--border);\n    border-radius: 14px;\n    box-shadow: var(--shadow);\n    padding: 22px;\n  }\n  .top{\n    display:flex; gap:16px; align-items:flex-start; justify-content:space-between;\n    padding-bottom: 14px; border-bottom:1px solid var(--border);\n    margin-bottom: 16px;\n  }\n  .title{ font-size: 26px; font-weight: 800; margin: 0; }\n  .subtitle{ margin: 6px 0 0; color:var(--muted); font-size: 14px; }\n  .who{ text-align:right; }\n  .who .name{ font-weight:800; }\n  .who .email{ color:var(--muted); font-size: 13px; margin-top: 4px; }\n\n  .btn{\n    display:inline-flex; align-items:center; justify-content:center;\n    padding: 11px 14px;\n    border-radius: 10px;\n    border:1px solid rgba(79,70,229,0.25);\n    background: linear-gradient(180deg, var(--primary), var(--primary2));\n    color:#fff; text-decoration:none;\n    font-weight: 800;\n    box-shadow: 0 10px 18px rgba(79,70,229,0.22);\n  }\n\n  .grid{\n    display:grid; grid-template-columns: repeat(3, 1fr);\n    gap: 12px;\n    margin: 16px 0 18px;\n  }\n\n  .stat{\n    border:1px solid var(--border);\n    border-radius: 12px;\n    padding: 12px;\n    background: #fafbff;\n  }\n  .stat .k{ color:var(--muted); font-size: 12px; }\n  .stat .v{ font-size: 20px; font-weight: 900; margin-top: 6px; }\n\n  .tableWrap{ overflow:auto; border:1px solid var(--border); border-radius: 12px; }\n  table{ width:100%; border-collapse: collapse; min-width: 980px; }\n  th, td{ padding: 12px; border-bottom:1px solid var(--border); font-size: 13px; vertical-align: top; }\n  th{ text-align:left; color: var(--muted); font-weight: 800; background:#fbfcff; }\n\n  .badge{\n    display:inline-flex;\n    padding: 5px 10px;\n    border-radius: 999px;\n    font-weight: 900;\n    font-size: 12px;\n    background: var(--chip);\n  }\n  .badge.approved{ background:#ecfdf5; color:#065f46; }\n  .badge.declined{ background:#fef2f2; color:#991b1b; }\n  .badge.submitted{ background:#eff6ff; color:#1e3a8a; }\n\n  .note{\n    width: 240px;\n    padding: 9px 10px;\n    border-radius: 10px;\n    border:1px solid var(--border);\n    font-size: 12px;\n    margin-right: 8px;\n  }\n\n  .decisionForm{\n    display:flex;\n    flex-direction:column;\n    gap:10px;\n  }\n\n  .decisionBtns{\n    display:flex;\n    gap:10px;\n  }\n\n  .aBtn{\n    border-radius:10px;\n    padding:8px 12px;\n    font-weight:900;\n    font-size:12px;\n    border:1px solid var(--border);\n    background:#fff;\n    cursor:pointer;\n  }\n\n  .aBtn.approve{\n    background:#ecfdf5;\n    border-color:#a7f3d0;\n    color:#065f46;\n  }\n\n  .aBtn.reject{\n    background:#fef2f2;\n    border-color:#fecaca;\n    color:#991b1b;\n  }\n\n  .muted{ color:var(--muted); }\n</style>\n`;\n\nconst logoHtml = `\n<div class=\"logo\">\n  <svg width=\"220\" height=\"50\" viewBox=\"0 0 220 50\" xmlns=\"http://www.w3.org/2000/svg\">\n    <defs>\n      <linearGradient id=\"flowGradient\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n        <stop offset=\"0%\" stop-color=\"#2563EB\"/>\n        <stop offset=\"100%\" stop-color=\"#06B6D4\"/>\n      </linearGradient>\n    </defs>\n    <circle cx=\"25\" cy=\"25\" r=\"20\" fill=\"url(#flowGradient)\" />\n    <path d=\"M15 25 Q25 10 35 25 T55 25\" stroke=\"white\" stroke-width=\"3\" fill=\"none\" />\n    <text x=\"60\" y=\"32\" font-family=\"Segoe UI, Arial, sans-serif\" font-size=\"22\" font-weight=\"600\" fill=\"#1E293B\">\n      ExpenseFlow\n    </text>\n  </svg>\n</div>\n`;\n\nconst tableHtml = `\n<div class=\"tableWrap\">\n<table>\n<thead>\n<tr>\n  <th>Claim ID</th>\n  <th>Employee</th>\n  <th>Submitted</th>\n  <th>Category</th>\n  <th>Amount</th>\n  <th>Merchant</th>\n  <th>Status</th>\n  <th>Receipt</th>\n  <th>Decision</th>\n</tr>\n</thead>\n<tbody>\n${\nrows.length === 0\n? `<tr><td colspan=\"9\" style=\"text-align:center;padding:28px\">No claims assigned to you yet.</td></tr>`\n: rows.map((r) => {\n  const isFinal =\n    r.status === \"APPROVED\" ||\n    r.status === \"REJECTED\" ||\n    r.status === \"DECLINED\";\n\n  return `\n  <tr>\n    <td>${esc(r.claim_id)}</td>\n    <td>\n      <strong>${esc(r.employee_name || \"\")}</strong><br/>\n      <span class=\"muted\">${esc(r.employee_email || \"\")}</span>\n    </td>\n    <td>${fmtDate(r.submitted_at)}</td>\n    <td>${esc(r.category)}</td>\n    <td>${esc(r.amount)} ${esc(r.currency)}</td>\n    <td>${esc(r.merchant)}</td>\n    <td><span class=\"badge ${badgeClass(r.status)}\">${esc(r.status)}</span></td>\n    <td>${r.receipt_url ? `<a href=\"${esc(r.receipt_url)}\" target=\"_blank\">Open</a>` : \"—\"}</td>\n    <td>\n      ${\n        isFinal\n        ? `\n          <strong>${esc(r.status)}</strong>\n          <div class=\"muted\">${esc(r.decision_notess || \"\")}</div>\n        `\n        : `\n        <form method=\"POST\" action=\"${decisionBaseUrl}\" class=\"decisionForm\">\n          <input type=\"hidden\" name=\"claim_id\" value=\"${esc(r.claim_id)}\" />\n\n          <textarea\n            name=\"decision_notes\"\n            class=\"note\"\n            placeholder=\"Optional note for employee…\"\n          ></textarea>\n\n          <div class=\"decisionBtns\">\n            <button class=\"aBtn approve\" type=\"submit\" name=\"action\" value=\"APPROVED\">\n              Approve\n            </button>\n            <button class=\"aBtn reject\" type=\"submit\" name=\"action\" value=\"REJECTED\">\n              Decline\n            </button>\n          </div>\n        </form>\n        `\n      }\n    </td>\n  </tr>\n  `;\n}).join(\"\")\n}\n</tbody>\n</table>\n</div>\n`;\n\nconst html = `\n<html>\n<head>\n<meta charset=\"utf-8\"/>\n<title>ExpenseFlow — Supervisor Dashboard</title>\n${css}\n</head>\n<body>\n  <div class=\"pageTop\">\n    ${logoHtml}\n    <a class=\"logoutBtn\" href=\"http://localhost:5678/webhook/expenseflow/auth/logout?token=${encodeURIComponent(token)}\">Logout</a>\n  </div>\n\n<div class=\"wrap\">\n<div class=\"card\">\n<div class=\"top\">\n  <div>\n    <h1 class=\"title\">ExpenseFlow</h1>\n    <div class=\"subtitle\">Supervisor dashboard — review and decide on employee claims</div>\n  </div>\n  <div class=\"who\">\n    <div class=\"name\">${esc(name)}</div>\n    <div class=\"email\">${esc(email)}</div>\n    <div style=\"margin-top:12px\">\n      <a class=\"btn\" href=\"${dashboardUrl}\">↻ Refresh</a>\n    </div>\n  </div>\n</div>\n\n<div class=\"grid\">\n  <div class=\"stat\"><div class=\"k\">Assigned</div><div class=\"v\">${total}</div></div>\n  <div class=\"stat\"><div class=\"k\">Awaiting</div><div class=\"v\">${submitted}</div></div>\n  <div class=\"stat\"><div class=\"k\">Approved / Rejected</div><div class=\"v\">${approved} / ${rejected}</div></div>\n</div>\n\n${tableHtml}\n</div>\n</div>\n</body>\n</html>\n`;\n\nreturn [{ json: { html } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        -192
+      ],
+      "id": "d413c0b7-f7a0-43e3-8de4-a7aac03337a3",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{$json.html}}\n",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1744,
+        -192
+      ],
+      "id": "36001068-b0e1-44b5-a9e1-c06bfef7e000",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0af9bb3a-c5dd-459d-ae69-0d4200385350",
+              "name": "token",
+              "value": "={{ ($json.query.token || '').replace(/^\"+|\"+$/g, '').replace(/\\\\\"/g, '').trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "cfc665ea-f91b-4812-9797-5535811c97d9",
+      "name": "Token Normalization "
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH u AS (\n  SELECT email, role\n  FROM users\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n  LIMIT 1\n),\nslide AS (\n  UPDATE users\n  SET token_expires_at = NOW() + INTERVAL '30 minutes'\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n    AND EXISTS (SELECT 1 FROM u)\n  RETURNING 1\n)\nSELECT\n  $1 AS token,\n  (u.email IS NOT NULL) AS token_valid,\n  COALESCE(u.email, '') AS email,\n  COALESCE(u.role, '') AS role\nFROM (SELECT 1) dummy\nLEFT JOIN u ON true\nLIMIT 1;\n",
+        "options": {
+          "queryReplacement": "={{$json.token}}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        448,
+        0
+      ],
+      "id": "e249e89d-8150-4639-9db6-c460c2d1c31a",
+      "name": "Validate Token + Refresh Expiry",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c9a9c0b6-4f12-4243-b7d9-2ba1c41c3b74",
+              "leftValue": "={{$json.token}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "0e53fc17-accf-4d8e-a032-56a0ff9c61c7",
+              "leftValue": "={{$json.token_valid}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        672,
+        0
+      ],
+      "id": "027185c6-f977-4b49-b9c3-ccc0a67b42ee",
+      "name": "Token Valid & Present?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH u AS (\n  SELECT role, email, name\n  FROM users\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n  LIMIT 1\n),\nslide AS (\n  UPDATE users\n  SET token_expires_at = NOW() + INTERVAL '30 minutes'\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n    AND EXISTS (SELECT 1 FROM u)\n  RETURNING 1\n)\nSELECT\n  $1 AS token,\n  (u.email IS NOT NULL) AS token_valid,\n  COALESCE(u.role, '') AS role,\n  COALESCE(u.email, '') AS email,\n  COALESCE(u.name, '') AS name\nFROM (SELECT 1) dummy\nLEFT JOIN u ON true\nLIMIT 1;\n",
+        "options": {
+          "queryReplacement": "={{$json.token}}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        880,
+        -96
+      ],
+      "id": "55e7165a-c22f-4996-9c10-ebe2a3be6500",
+      "name": "Validate Token + Refresh Expiry1",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5d3cec2a-dd2a-4ac1-8465-6a034f2dee84",
+              "leftValue": "={{$json.token_valid}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "d5cdb2a8-e784-4daa-bff0-e33418d50ae2",
+              "leftValue": "={{$json.role}}",
+              "rightValue": "=SUPERVISOR",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "42b6dd29-ff36-4b18-945b-55613b9d1a04",
+              "leftValue": "={{$json.token_valid}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1120,
+        -96
+      ],
+      "id": "29b9f42c-1ddc-4b86-94f2-1dab371fefb6",
+      "name": "Supervisor Access Check"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  COALESCE(\n    json_agg(\n      json_build_object(\n        'claim_id', c.claim_id,\n        'submitted_at', c.submitted_at,\n        'employee_email', c.employee_email,\n        'employee_name', c.employee_name,\n        'category', c.category,\n        'amount', c.amount,\n        'currency', c.currency,\n        'merchant', c.merchant,\n        'description', c.description,\n        'receipt_url', c.receipt_url,\n        'status', c.status,\n        'approver_email', c.approver_email,\n        'approved_at', c.approved_at,\n        'decision_notes', c.decision_notes\n      )\n      ORDER BY c.submitted_at DESC\n    ) FILTER (WHERE c.claim_id IS NOT NULL),\n    '[]'::json\n  ) AS claims\nFROM claims c\nWHERE c.approver_email = $1;\n",
+        "options": {
+          "queryReplacement": "={{$node[\"Validate Token + Refresh Expiry1\"].json.email}}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1328,
+        -192
+      ],
+      "id": "42de27c4-2487-4595-8fbd-00e0719dac2a",
+      "name": "Load Assigned Claims",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Token Normalization ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Normalization ": {
+      "main": [
+        [
+          {
+            "node": "Validate Token + Refresh Expiry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Token + Refresh Expiry": {
+      "main": [
+        [
+          {
+            "node": "Token Valid & Present?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Valid & Present?": {
+      "main": [
+        [
+          {
+            "node": "Validate Token + Refresh Expiry1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Token + Refresh Expiry1": {
+      "main": [
+        [
+          {
+            "node": "Supervisor Access Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supervisor Access Check": {
+      "main": [
+        [
+          {
+            "node": "Load Assigned Claims",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Assigned Claims": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e6b4269f-3353-4bc7-bba3-58ccf139222e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ed78ae6e681edbfae313d0e8063f75c68ae48b9e68d4728e17cb5150634a5de7"
+  },
+  "id": "I9cpurLf80eJ4o5v",
+  "tags": []
+}

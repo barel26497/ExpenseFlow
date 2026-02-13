@@ -1,0 +1,589 @@
+{
+  "name": "ExpenseFlow - Admin - Create Employee (POST)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/expenseflow/admin/add-employee",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0d1b1d27-b8ca-40f2-b432-5072da0239cf",
+      "name": "Webhook",
+      "webhookId": "1d8f3cac-8ae0-43da-96da-a91f6b10bbe3"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <title>401 – Unauthorized</title>\n\n    <style>\n      :root {\n        --bg: #f5f7fb;\n        --card: #ffffff;\n        --text: #1f2937;\n        --muted: #6b7280;\n        --accent: #f59e0b; /* amber for auth issues */\n      }\n\n      * {\n        box-sizing: border-box;\n      }\n\n      body {\n        margin: 0;\n        min-height: 100vh;\n        font-family: system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n          Roboto, sans-serif;\n        background: var(--bg);\n        display: flex;\n        align-items: center;\n        justify-content: center;\n        padding: 24px;\n        color: var(--text);\n      }\n\n      .card {\n        background: var(--card);\n        padding: 36px 40px;\n        border-radius: 14px;\n        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);\n        text-align: center;\n        max-width: 420px;\n        width: 100%;\n      }\n\n      .code {\n        font-size: 3rem;\n        font-weight: 800;\n        color: var(--accent);\n        margin-bottom: 8px;\n      }\n\n      h1 {\n        font-size: 1.4rem;\n        margin: 0 0 10px;\n      }\n\n      p {\n        margin: 0;\n        color: var(--muted);\n        font-size: 0.95rem;\n      }\n    </style>\n  </head>\n\n  <body>\n    <div class=\"card\">\n      <div class=\"code\">401</div>\n      <h1>Unauthorized</h1>\n      <p>Your session is missing or the access token is invalid.</p>\n    </div>\n  </body>\n</html>\n",
+        "options": {
+          "responseCode": 401,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        704,
+        272
+      ],
+      "id": "4b6ae9e4-f820-48bf-b301-a68f84b351fc",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <title>403 – Access Denied</title>\n\n    <style>\n      :root {\n        --bg: #f5f7fb;\n        --card: #ffffff;\n        --text: #1f2937;\n        --muted: #6b7280;\n        --accent: #ef4444;\n      }\n\n      * {\n        box-sizing: border-box;\n      }\n\n      body {\n        margin: 0;\n        min-height: 100vh;\n        font-family: system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n          Roboto, sans-serif;\n        background: var(--bg);\n        display: flex;\n        align-items: center;\n        justify-content: center;\n        padding: 24px;\n        color: var(--text);\n      }\n\n      .card {\n        background: var(--card);\n        padding: 36px 40px;\n        border-radius: 16px;\n        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.08);\n        text-align: center;\n        max-width: 420px;\n        width: 100%;\n      }\n\n      .code {\n        font-size: 3.2rem;\n        font-weight: 800;\n        color: var(--accent);\n        margin-bottom: 8px;\n      }\n\n      h1 {\n        font-size: 1.5rem;\n        margin: 0 0 10px;\n      }\n\n      p {\n        margin: 0;\n        color: var(--muted);\n        font-size: 0.95rem;\n        line-height: 1.5;\n      }\n    </style>\n  </head>\n\n  <body>\n    <div class=\"card\">\n      <div class=\"code\">403</div>\n      <h1>Access denied</h1>\n      <p>This area is restricted to administrators only / Token Invalid.</p>\n    </div>\n  </body>\n</html>\n",
+        "options": {
+          "responseCode": 403,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1376,
+        272
+      ],
+      "id": "8d90f033-15c0-4d64-a13d-b345730606d6",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <title>400 – Bad Request</title>\n\n    <style>\n      :root {\n        --bg: #f5f7fb;\n        --card: #ffffff;\n        --text: #1f2937;\n        --muted: #6b7280;\n        --accent: #6366f1; /* neutral indigo for bad requests */\n      }\n\n      * {\n        box-sizing: border-box;\n      }\n\n      body {\n        margin: 0;\n        min-height: 100vh;\n        font-family: system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n          Roboto, sans-serif;\n        background: var(--bg);\n        display: flex;\n        align-items: center;\n        justify-content: center;\n        padding: 24px;\n        color: var(--text);\n      }\n\n      .card {\n        background: var(--card);\n        padding: 36px 40px;\n        border-radius: 16px;\n        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.08);\n        text-align: center;\n        max-width: 420px;\n        width: 100%;\n      }\n\n      .code {\n        font-size: 3.2rem;\n        font-weight: 800;\n        color: var(--accent);\n        margin-bottom: 8px;\n      }\n\n      h1 {\n        font-size: 1.5rem;\n        margin: 0 0 10px;\n      }\n\n      p {\n        margin: 0;\n        color: var(--muted);\n        font-size: 0.95rem;\n        line-height: 1.5;\n      }\n    </style>\n  </head>\n\n  <body>\n    <div class=\"card\">\n      <div class=\"code\">400</div>\n      <h1>Bad request</h1>\n      <p>The request could not be processed due to invalid or missing data.</p>\n    </div>\n  </body>\n</html>\n",
+        "options": {
+          "responseCode": 400,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1696,
+        240
+      ],
+      "id": "99bf1134-64b6-41fc-81cb-8a6cda3c6366",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "respondWith": "redirect",
+        "redirectURL": "={{ \"http://localhost:5678/webhook/app/expenseflow/admin/dashboard?token=\" + encodeURIComponent(String($json.admin_token || \"\").replace(/^\\-+/, \"\").trim()) }}",
+        "options": {
+          "responseCode": 302
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2352,
+        -208
+      ],
+      "id": "77741535-534f-4df0-9b22-480910a39543",
+      "name": "Respond to Webhook3"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        928,
+        -432
+      ],
+      "id": "677d92d0-23fe-424c-9603-9da7d748e8af",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfa4963b-520f-4e16-9ae3-bc63d3b5b213",
+              "name": "admin_token",
+              "value": "={{ $json.query.token }}",
+              "type": "string"
+            },
+            {
+              "id": "091b107f-fb19-448b-8ff7-630085650cc0",
+              "name": "new_email",
+              "value": "={{$json.body.employee_email}}",
+              "type": "string"
+            },
+            {
+              "id": "14b40cf4-93a3-4d8f-89a4-410d8c91bd2c",
+              "name": "new_name",
+              "value": "={{$json.body.employee_name}}",
+              "type": "string"
+            },
+            {
+              "id": "82e408f6-1a57-4dee-8e72-6731440893b4",
+              "name": "new_role",
+              "value": "={{ $json.body.role }}",
+              "type": "string"
+            },
+            {
+              "id": "1d3be134-7779-45a3-8d95-0b95539aaac0",
+              "name": "supervisor_email",
+              "value": "={{ ($json.body.supervisor_email || '').trim() || null }}",
+              "type": "string"
+            },
+            {
+              "id": "a0d9758a-4019-483e-a591-842fa10a1141",
+              "name": "new_password",
+              "value": "={{$json.body.password}}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "969a76b4-8c27-4fda-8a22-1a7300195a1e",
+      "name": "Normalize New user Payload"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c9a9c0b6-4f12-4243-b7d9-2ba1c41c3b74",
+              "leftValue": "={{$json.admin_token}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "86d8543d-9478-4195-9354-ff7c886bf5d7",
+              "leftValue": "={{$json.new_password}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        528,
+        0
+      ],
+      "id": "eb27ab48-f15e-4407-86b7-1a3d3503511f",
+      "name": "Token Present"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH u AS (\n  SELECT email, name, role\n  FROM users\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n  LIMIT 1\n),\nslide AS (\n  UPDATE users\n  SET token_expires_at = NOW() + INTERVAL '30 minutes'\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n    AND EXISTS (SELECT 1 FROM u)\n  RETURNING 1\n)\nSELECT\n  COALESCE(u.email, '') AS admin_email,\n  COALESCE(u.name, '')  AS admin_name,\n  COALESCE(u.role, '')  AS admin_role\nFROM (SELECT 1) dummy\nLEFT JOIN u ON true\nLIMIT 1;\n",
+        "options": {
+          "queryReplacement": "={{$json.admin_token}}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        784,
+        -16
+      ],
+      "id": "63f8c0c9-09b0-4ba9-8169-f6a9c78f8494",
+      "name": "Getting Admin Info",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0e2dccb1-fca0-42dd-8724-c9f5c379a670",
+              "leftValue": "={{$json.admin_role}}",
+              "rightValue": "ADMIN",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1072,
+        -16
+      ],
+      "id": "07984273-2d49-4760-9331-df46c676d333",
+      "name": "Permission Check"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "dfc5a945-0ba2-4912-9f0f-0f2176efe927",
+              "leftValue": "={{$json.new_email}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "45f49575-533b-4c1c-b327-43c29fa4ec53",
+              "leftValue": "={{$json.new_name}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "8536de3d-4278-4c51-9a23-1a24f2ede385",
+              "leftValue": "={{$json.new_role}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1280,
+        -112
+      ],
+      "id": "f42c1ed0-2d47-470f-abff-e65b47ed054e",
+      "name": "Validate New user Input"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "74332855-9e56-4c79-8c7c-1d0eb5105422",
+              "name": "new_user_token",
+              "value": "={{$execution.id + \"-\" + Date.now()}}",
+              "type": "string"
+            },
+            {
+              "id": "2cca718e-6306-4833-8318-3db369d51307",
+              "name": "new_email",
+              "value": "={{$json.new_email}}",
+              "type": "string"
+            },
+            {
+              "id": "1f340166-559c-4391-8091-c1118eb43233",
+              "name": "new_name",
+              "value": "={{$json.new_name}}",
+              "type": "string"
+            },
+            {
+              "id": "b0e625ba-ad0a-4b8c-8f3a-04a9e4cb2133",
+              "name": "new_role",
+              "value": "={{$json.new_role}}",
+              "type": "string"
+            },
+            {
+              "id": "bc74652b-1cee-4f9a-a32e-608703163e86",
+              "name": "supervisor_email",
+              "value": "={{$json.supervisor_email}}",
+              "type": "string"
+            },
+            {
+              "id": "cb3c3931-ed2b-4a5b-b0d4-0fc529fb9c63",
+              "name": "=new_password",
+              "value": "={{$json.new_password}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1632,
+        -208
+      ],
+      "id": "723d5bf0-492d-45bd-b6e5-5a163fe64e95",
+      "name": "Prepare New User Payload"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO users (\n  email,\n  name,\n  role,\n  active,\n  token,\n  supervisor_email,\n  password_hash\n)\nVALUES (\n  $1,\n  $2,\n  $3,\n  true,\n  $4,\n  CASE\n    WHEN $5 IS NULL THEN NULL\n    WHEN trim($5) = '' THEN NULL\n    WHEN lower(trim($5)) = 'null' THEN NULL\n    ELSE $5\n  END,\n  CASE\n  WHEN $6 IS NULL THEN NULL\n  WHEN trim($6) = '' THEN NULL\n  ELSE crypt($6, gen_salt('bf'))\nEND\n)\nON CONFLICT (email)\nDO UPDATE SET\n  name = EXCLUDED.name,\n  role = EXCLUDED.role,\n  active = true,\n  token = EXCLUDED.token,\n  supervisor_email = EXCLUDED.supervisor_email,\n  password_hash = EXCLUDED.password_hash\nRETURNING email, name, role, active, token, supervisor_email;\n",
+        "options": {
+          "queryReplacement": "={{$json.new_email}}\n{{$json.new_name}}\n{{$json.new_role}}\n{{$json.new_user_token}}\n{{ $json.new_role === 'EMPLOYEE' && $json.supervisor_email ? $json.supervisor_email : null }}\n{{$json.new_password}}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1888,
+        -208
+      ],
+      "id": "88ad8172-d250-4a8b-a774-fecd17322b41",
+      "name": "Upsert User",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2998d477-d446-4a5a-abe6-6310a44d1806",
+              "name": "admin_token",
+              "value": "={{ $json.query?.token || $node[\"Webhook\"].json.query.token }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2128,
+        -208
+      ],
+      "id": "d391effa-a91d-414b-9518-52ba08defc28",
+      "name": "Extract Admin Token"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize New user Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Permission Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize New user Payload": {
+      "main": [
+        [
+          {
+            "node": "Token Present",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Present": {
+      "main": [
+        [
+          {
+            "node": "Getting Admin Info",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Getting Admin Info": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Permission Check": {
+      "main": [
+        [
+          {
+            "node": "Validate New user Input",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate New user Input": {
+      "main": [
+        [
+          {
+            "node": "Prepare New User Payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare New User Payload": {
+      "main": [
+        [
+          {
+            "node": "Upsert User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert User": {
+      "main": [
+        [
+          {
+            "node": "Extract Admin Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Admin Token": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "0dedd2c0-da56-489e-9177-868ee75ef265",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ed78ae6e681edbfae313d0e8063f75c68ae48b9e68d4728e17cb5150634a5de7"
+  },
+  "id": "a-FUVqYGzEc9__7hDYX16",
+  "tags": []
+}

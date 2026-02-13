@@ -1,0 +1,97 @@
+{
+  "name": "ExpenseFlow — Auth — Logout (GET)",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "expenseflow/auth/logout",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "655e0f8c-f93b-435c-916d-a7c7a5efb887",
+      "name": "Webhook",
+      "webhookId": "00089b0c-c2f2-4570-bf68-7b5c46827c57"
+    },
+    {
+      "parameters": {
+        "respondWith": "redirect",
+        "redirectURL": "http://localhost:5678/webhook/expenseflow/auth/login",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        0
+      ],
+      "id": "aaa4b8ff-ada2-4f3a-9bf3-eeac43761620",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH input AS (\n  SELECT NULLIF(TRIM($1::text), '') AS token\n),\nu AS (\n  SELECT email\n  FROM users\n  WHERE token = (SELECT token FROM input)\n    AND active = true\n  LIMIT 1\n),\ninvalidate AS (\n  UPDATE users\n  SET token_expires_at = NOW() - INTERVAL '1 second'\n  WHERE token = (SELECT token FROM input)\n    AND EXISTS (SELECT 1 FROM u)\n  RETURNING 1\n)\nSELECT\n  (SELECT token FROM input) AS token,\n  (SELECT email FROM u) AS email,\n  EXISTS (SELECT 1 FROM invalidate) AS ok;\n",
+        "options": {
+          "queryReplacement": "={{$json.query.token}}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        208,
+        0
+      ],
+      "id": "82824c59-7923-4eca-94d1-4c18af969a18",
+      "name": "Revoke Token",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Revoke Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revoke Token": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "78206b87-9afe-47e6-8199-7b9889e4847b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ed78ae6e681edbfae313d0e8063f75c68ae48b9e68d4728e17cb5150634a5de7"
+  },
+  "id": "shsKr7wJJBdAwp2UWzogs",
+  "tags": []
+}

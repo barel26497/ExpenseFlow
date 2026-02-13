@@ -1,0 +1,263 @@
+{
+  "name": "ExpenseFlow — Auth — Login (POST)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/expenseflow/auth/login",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "029787e0-3348-449e-b824-b7ab5d883b46",
+      "name": "Webhook",
+      "webhookId": "ef9961f7-b695-489b-832f-163d610107ac"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{\n(() => {\n  const safe = (v) =>\n    String(v ?? \"\")\n      .replaceAll(\"&\", \"&amp;\")\n      .replaceAll(\"<\", \"&lt;\")\n      .replaceAll(\">\", \"&gt;\")\n      .replaceAll('\"', \"&quot;\")\n      .replaceAll(\"'\", \"&#039;\");\n\n  const email = String($json.email || \"\");\n  const msg =\n    ($json.status === \"INACTIVE\")\n      ? \"Your account is deactivated. Please contact your supervisor/admin.\"\n      : ($json.status === \"NO_USER\")\n        ? \"No account found for this email.\"\n        : \"Incorrect email or password.\";\n\n  return `<!doctype html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n  <title>ExpenseFlow — Login</title>\n  <style>\n    :root{\n      --bg:#f6f7fb;\n      --card:#ffffff;\n      --text:#0f172a;\n      --muted:#64748b;\n      --border:#e7eaf3;\n      --shadow:0 12px 32px rgba(15,23,42,0.08);\n      --primary:#4f46e5;\n      --primary2:#4338ca;\n      --error-bg:#fef2f2;\n      --error-border:#fecaca;\n      --error-text:#991b1b;\n    }\n    *{ box-sizing:border-box; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }\n    body{\n      margin:0;\n      min-height:100vh;\n      display:flex;\n      align-items:center;\n      justify-content:center;\n      background:var(--bg);\n      color:var(--text);\n    }\n    .wrap{ width:100%; max-width:420px; padding:18px; }\n    .card{\n      background:var(--card);\n      border:1px solid var(--border);\n      border-radius:14px;\n      box-shadow:var(--shadow);\n      padding:24px;\n    }\n    .title{ font-size:26px; font-weight:800; margin:0; }\n    .subtitle{ margin:6px 0 18px; color:var(--muted); font-size:14px; }\n    .msg{\n      border-radius:10px;\n      padding:10px 12px;\n      font-size:13px;\n      margin-bottom:14px;\n      border:1px solid var(--border);\n      background:#f8fafc;\n      color:var(--text);\n    }\n    .msg.error{ background:var(--error-bg); border-color:var(--error-border); color:var(--error-text); }\n    .btn{\n      width:100%;\n      height:44px;\n      border-radius:12px;\n      border:1px solid rgba(79,70,229,0.25);\n      background:linear-gradient(180deg,var(--primary),var(--primary2));\n      color:#ffffff;\n      font-size:15px;\n      font-weight:700;\n      cursor:pointer;\n      box-shadow:0 10px 20px rgba(79,70,229,0.22);\n      display:inline-flex;\n      align-items:center;\n      justify-content:center;\n      text-decoration:none;\n    }\n    .btn:hover{ filter:brightness(1.05); }\n    .foot{ margin-top:16px; text-align:center; font-size:12px; color:var(--muted); }\n  </style>\n</head>\n<body>\n  <div class=\"wrap\">\n    <div class=\"card\">\n      <h1 class=\"title\">ExpenseFlow</h1>\n      <div class=\"subtitle\">Sign in to continue</div>\n\n      <div class=\"msg error\">${safe(msg)}</div>\n\n      <a class=\"btn\" href=\"/webhook/expenseflow/auth/login\">Back to login</a>\n\n      <div class=\"foot\">Access is managed by administrators</div>\n    </div>\n  </div>\n</body>\n</html>`;\n})()\n}}\n",
+        "options": {
+          "responseCode": 401,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1056,
+        144
+      ],
+      "id": "924babfd-1b08-4e46-9d95-fca5c5a1bb8a",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "redirect",
+        "redirectURL": "={{ String($json.dest || \"\").trim() }}",
+        "options": {
+          "responseCode": 302
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1248,
+        -128
+      ],
+      "id": "288d2191-ba4c-47ca-91d5-e254c5cb3375",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "35451818-1f36-4e75-aa8b-fcd692c48edd",
+              "name": "email",
+              "value": "={{($json.body.email || \"\").toLowerCase().trim()}}",
+              "type": "string"
+            },
+            {
+              "id": "add323f6-e7fe-4104-bac0-e4162e318ffc",
+              "name": "password",
+              "value": "={{$json.body.password || \"\"}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        176,
+        0
+      ],
+      "id": "5a38dc13-9b72-4976-81ff-6b921841e660",
+      "name": "Normalize Login Input"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH input AS (\n  SELECT\n    lower(trim($1::text)) AS email_in,\n    $2::text              AS pass_in\n),\nu AS (\n  SELECT email, name, role, token, active, password_hash\n  FROM users\n  WHERE lower(trim(email)) = (SELECT email_in FROM input)\n  LIMIT 1\n),\nauth AS (\n  SELECT\n    CASE\n      WHEN u.email IS NULL THEN 'NO_USER'\n      WHEN COALESCE(u.active, false) = false THEN 'INACTIVE'\n      WHEN u.password_hash IS NULL OR u.password_hash = '' THEN 'NO_PASSWORD'\n      WHEN crypt((SELECT pass_in FROM input), u.password_hash) <> u.password_hash THEN 'BAD_PASSWORD'\n      ELSE 'OK'\n    END AS status,\n    u.email,\n    u.name,\n    u.role\n  FROM input\n  LEFT JOIN u ON true\n),\nissue AS (\n  UPDATE users\n  SET\n    token = encode(gen_random_bytes(24), 'hex'),\n    token_expires_at = NOW() + INTERVAL '30 minutes'\n  WHERE lower(trim(email)) = (SELECT email_in FROM input)\n    AND (SELECT status FROM auth) = 'OK'\n  RETURNING token\n)\nSELECT\n  (SELECT status FROM auth) AS status,\n  (SELECT email FROM auth)  AS email,\n  (SELECT name FROM auth)   AS name,\n  (SELECT role FROM auth)   AS role,\n  COALESCE((SELECT token FROM issue), COALESCE(u.token, '')) AS token\nFROM input\nLEFT JOIN u ON true;\n",
+        "options": {
+          "queryReplacement": "={{$json.email}}\n{{$json.password}}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        464,
+        0
+      ],
+      "id": "40571b76-71e9-45ac-ae6a-3f4f5744753e",
+      "name": "Login & Token Generation",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "91411d20-8df8-40dc-bcad-c9b9145bc48e",
+              "leftValue": "={{$json.status}}",
+              "rightValue": "OK",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        800,
+        0
+      ],
+      "id": "50c89c4c-95ce-4229-a8a9-f03b8c01c373",
+      "name": "Is Login Valid?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "34ac93ee-0141-4713-8000-44b9e67aa6c1",
+              "name": "token",
+              "value": "={{$json.token}}",
+              "type": "string"
+            },
+            {
+              "id": "5406f0ee-ee54-4d64-89dc-9fd25abc97a4",
+              "name": "role",
+              "value": "={{$json.role}}",
+              "type": "string"
+            },
+            {
+              "id": "8e389d5b-08f1-4d7a-89e9-28ebfb09c862",
+              "name": "dest",
+              "value": "={{\n  (\n    \"http://localhost:5678\" +\n    (\n      (String($json.role || \"\").toUpperCase() === \"ADMIN\")\n        ? (\"/webhook/app/expenseflow/admin/dashboard?token=\" + encodeURIComponent(String($json.token || \"\")))\n        : (String($json.role || \"\").toUpperCase() === \"SUPERVISOR\")\n          ? (\"/webhook/app/expenseflow/supervisor/dashboard?token=\" + encodeURIComponent(String($json.token || \"\")))\n          : (\"/webhook/app/expenseflow/employee/dashboard?token=\" + encodeURIComponent(String($json.token || \"\")))\n    )\n  ).trim()\n}}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1040,
+        -128
+      ],
+      "id": "7e56ad97-a03b-4918-bb85-e7baeea6f951",
+      "name": "Build Redirect URL"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Login Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Login Input": {
+      "main": [
+        [
+          {
+            "node": "Login & Token Generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Login & Token Generation": {
+      "main": [
+        [
+          {
+            "node": "Is Login Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Login Valid?": {
+      "main": [
+        [
+          {
+            "node": "Build Redirect URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Redirect URL": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e1026a3d-7b3f-4d3d-a483-11ff4080848d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ed78ae6e681edbfae313d0e8063f75c68ae48b9e68d4728e17cb5150634a5de7"
+  },
+  "id": "zXHC3i92vHYJf5z1B0L5x",
+  "tags": []
+}

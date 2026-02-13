@@ -1,0 +1,327 @@
+{
+  "name": "ExpenseFlow – Get Claim Form(GET)",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "expenseflow",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1248,
+        0
+      ],
+      "id": "bc1a7742-c8b7-4688-af80-4f199703d8f6",
+      "name": "Webhook",
+      "webhookId": "2fb8eb1b-4f06-4c9c-b768-52859ddf338b"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />\n    <title>ExpenseFlow – Submit Claim</title>\n\n    <style>\n      :root {\n        --bg: #f5f7fb;\n        --card: #ffffff;\n        --text: #1f2937;\n        --muted: #6b7280;\n        --primary: #4f46e5;\n        --primary-hover: #4338ca;\n        --border: #e5e7eb;\n        --radius: 12px;\n      }\n\n      * {\n        box-sizing: border-box;\n      }\n\n      body {\n        margin: 0;\n        font-family: system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n          Roboto, sans-serif;\n        background: var(--bg);\n        color: var(--text);\n        padding: 48px 16px;\n      }\n\n      .pageTop{\n        max-width: 720px;\n        margin: 0 auto 18px;\n        display:flex;\n        align-items:center;\n        justify-content:space-between;\n        gap:16px;\n      }\n\n      .logo { display: flex; align-items: center; }\n      .logo svg { height: 42px; }\n      .logo text { letter-spacing: 0.5px; }\n\n      .topActions{\n        display:flex;\n        align-items:center;\n        gap:10px;\n        flex-wrap:wrap;\n        justify-content:flex-end;\n      }\n\n      .backBtn{\n        display:inline-flex;\n        align-items:center;\n        justify-content:center;\n        padding: 10px 14px;\n        border-radius: 10px;\n        border: 1px solid rgba(79,70,229,0.25);\n        background: #ffffff;\n        color: #1f2937;\n        cursor: pointer;\n        text-decoration:none;\n        font-weight: 800;\n        font-size: 13px;\n        white-space: nowrap;\n        transition: transform .12s ease, background .12s ease;\n      }\n\n      .backBtn:hover{\n        transform: translateY(-1px);\n        background: rgba(79,70,229,0.06);\n      }\n\n      .logoutBtn{\n        display:inline-flex;\n        align-items:center;\n        justify-content:center;\n        padding: 10px 20px;\n        border: none;\n        border-radius: 10px;\n        background: linear-gradient(180deg, var(--primary), var(--primary-hover));\n        color: white;\n        cursor: pointer;\n        text-decoration:none;\n        font-weight: 900;\n        font-size: 14px;\n        white-space: nowrap;\n        transition: transform .12s ease, filter .12s ease;\n      }\n\n      .logoutBtn:hover{\n        transform: translateY(-1px);\n        filter: brightness(1.03);\n      }\n\n      .container {\n        max-width: 720px;\n        margin: 0 auto;\n      }\n\n      .card {\n        background: var(--card);\n        padding: 32px;\n        border-radius: var(--radius);\n        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);\n      }\n\n      h2 {\n        margin: 0;\n        font-size: 1.6rem;\n      }\n\n      .subtitle {\n        margin-top: 6px;\n        margin-bottom: 28px;\n        color: var(--muted);\n      }\n\n      .field-group {\n        margin-bottom: 18px;\n      }\n\n      label {\n        display: block;\n        font-weight: 600;\n        font-size: 0.9rem;\n        margin-bottom: 6px;\n      }\n\n      input,\n      select,\n      textarea {\n        width: 100%;\n        padding: 11px 12px;\n        font-size: 0.95rem;\n        border-radius: 8px;\n        border: 1px solid var(--border);\n        transition: border-color 0.15s, box-shadow 0.15s;\n      }\n\n      textarea {\n        resize: vertical;\n        min-height: 90px;\n      }\n\n      input:focus,\n      select:focus,\n      textarea:focus {\n        outline: none;\n        border-color: var(--primary);\n        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);\n      }\n\n      .row {\n        display: grid;\n        grid-template-columns: 1fr 1fr;\n        gap: 16px;\n      }\n\n      button {\n        margin-top: 10px;\n        width: 100%;\n        padding: 14px;\n        font-size: 1rem;\n        font-weight: 700;\n        border-radius: 10px;\n        border: none;\n        background: var(--primary);\n        color: #fff;\n        cursor: pointer;\n        transition: background 0.15s, transform 0.05s;\n      }\n\n      button:hover {\n        background: var(--primary-hover);\n      }\n\n      button:active {\n        transform: translateY(1px);\n      }\n\n      @media (max-width: 640px) {\n        .row {\n          grid-template-columns: 1fr;\n        }\n        .pageTop{\n          flex-direction: column;\n          align-items: flex-start;\n        }\n        .topActions{\n          width: 100%;\n          justify-content:flex-start;\n        }\n      }\n    </style>\n  </head>\n\n  <body>\n    <div class=\"pageTop\">\n      <div class=\"logo\">\n        <svg width=\"220\" height=\"50\" viewBox=\"0 0 220 50\" xmlns=\"http://www.w3.org/2000/svg\">\n          <defs>\n            <linearGradient id=\"flowGradient\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n              <stop offset=\"0%\" stop-color=\"#2563EB\"/>\n              <stop offset=\"100%\" stop-color=\"#06B6D4\"/>\n            </linearGradient>\n          </defs>\n          <circle cx=\"25\" cy=\"25\" r=\"20\" fill=\"url(#flowGradient)\" />\n          <path d=\"M15 25 Q25 10 35 25 T55 25\" stroke=\"white\" stroke-width=\"3\" fill=\"none\" />\n          <text x=\"60\" y=\"32\" font-family=\"Segoe UI, Arial, sans-serif\" font-size=\"22\" font-weight=\"600\" fill=\"#1E293B\">\n            ExpenseFlow\n          </text>\n        </svg>\n      </div>\n\n      <div class=\"topActions\">\n        <a class=\"backBtn\" href=\"/webhook/app/expenseflow/employee/dashboard?token={{$node['Webhook'].json.query.token}}\">Back</a>\n        <a class=\"logoutBtn\" href=\"/webhook/expenseflow/auth/logout?token={{$node['Webhook'].json.query.token}}\">Logout</a>\n      </div>\n    </div>\n\n    <div class=\"container\">\n      <div class=\"card\">\n        <h2>ExpenseFlow</h2>\n        <div class=\"subtitle\">Submit an expense claim</div>\n\n        <form method=\"POST\" action=\"http://localhost:5678/webhook/expenseflow/submit?token={{$node['Webhook'].json.query.token}}\">\n          <div class=\"field-group\">\n            <label>Employee Name</label>\n            <input name=\"employee_name\" value=\"{{$json.name}}\" readonly />\n          </div>\n\n          <div class=\"field-group\">\n            <label>Employee Email</label>\n            <input name=\"employee_email\" value=\"{{$json.email}}\" readonly />\n          </div>\n\n          <div class=\"row\">\n            <div class=\"field-group\">\n              <label>Category</label>\n              <select name=\"category\" required>\n                <option>Travel</option>\n                <option>Food</option>\n                <option>Office</option>\n                <option>Other</option>\n              </select>\n            </div>\n\n            <div class=\"field-group\">\n              <label>Merchant</label>\n              <input name=\"merchant\" required />\n            </div>\n          </div>\n\n          <div class=\"row\">\n            <div class=\"field-group\">\n              <label>Amount</label>\n              <input\n                name=\"amount\"\n                type=\"number\"\n                step=\"0.01\"\n                min=\"0\"\n                required\n              />\n            </div>\n\n            <div class=\"field-group\">\n              <label>Currency</label>\n              <select name=\"currency\" required>\n                <option>ILS</option>\n                <option>USD</option>\n                <option>EUR</option>\n              </select>\n            </div>\n          </div>\n\n          <div class=\"field-group\">\n            <label>Description</label>\n            <textarea name=\"description\" required></textarea>\n          </div>\n\n          <div class=\"field-group\">\n            <label>Receipt URL</label>\n            <input name=\"receipt_url\" type=\"url\" required />\n          </div>\n\n          <button type=\"submit\">Submit Claim</button>\n        </form>\n      </div>\n    </div>\n  </body>\n</html>\n",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        336,
+        -160
+      ],
+      "id": "bb38c2bf-a4ca-4737-bb39-ddb7c5fbc605",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <title>403 – Access Denied</title>\n\n    <style>\n      :root {\n        --bg: #f5f7fb;\n        --card: #ffffff;\n        --text: #1f2937;\n        --muted: #6b7280;\n        --accent: #ef4444;\n      }\n\n      * {\n        box-sizing: border-box;\n      }\n\n      body {\n        margin: 0;\n        min-height: 100vh;\n        font-family: system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n          Roboto, sans-serif;\n        background: var(--bg);\n        display: flex;\n        align-items: center;\n        justify-content: center;\n        padding: 24px;\n        color: var(--text);\n      }\n\n      .card {\n        background: var(--card);\n        padding: 36px 40px;\n        border-radius: 16px;\n        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.08);\n        text-align: center;\n        max-width: 420px;\n        width: 100%;\n      }\n\n      .code {\n        font-size: 3.2rem;\n        font-weight: 800;\n        color: var(--accent);\n        margin-bottom: 8px;\n      }\n\n      h1 {\n        font-size: 1.5rem;\n        margin: 0 0 10px;\n      }\n\n      p {\n        margin: 0;\n        color: var(--muted);\n        font-size: 0.95rem;\n        line-height: 1.5;\n      }\n    </style>\n  </head>\n\n  <body>\n    <div class=\"card\">\n      <div class=\"code\">403</div>\n      <h1>Access denied</h1>\n      <p>Token Is Invalid.</p>\n    </div>\n  </body>\n</html>\n",
+        "options": {
+          "responseCode": 403,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        320,
+        176
+      ],
+      "id": "158e7616-65be-4ef6-bc64-a6e96ad1cc8a",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <title>403 – Access Denied</title>\n\n    <style>\n      :root {\n        --bg: #f5f7fb;\n        --card: #ffffff;\n        --text: #1f2937;\n        --muted: #6b7280;\n        --accent: #ef4444;\n      }\n\n      * {\n        box-sizing: border-box;\n      }\n\n      body {\n        margin: 0;\n        min-height: 100vh;\n        font-family: system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n          Roboto, sans-serif;\n        background: var(--bg);\n        display: flex;\n        align-items: center;\n        justify-content: center;\n        padding: 24px;\n        color: var(--text);\n      }\n\n      .card {\n        background: var(--card);\n        padding: 36px 40px;\n        border-radius: 16px;\n        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.08);\n        text-align: center;\n        max-width: 420px;\n        width: 100%;\n      }\n\n      .code {\n        font-size: 3.2rem;\n        font-weight: 800;\n        color: var(--accent);\n        margin-bottom: 8px;\n      }\n\n      h1 {\n        font-size: 1.5rem;\n        margin: 0 0 10px;\n      }\n\n      p {\n        margin: 0;\n        color: var(--muted);\n        font-size: 0.95rem;\n        line-height: 1.5;\n      }\n    </style>\n  </head>\n\n  <body>\n    <div class=\"card\">\n      <div class=\"code\">403</div>\n      <h1>Access denied</h1>\n      <p>Token Does Not Exists.</p>\n    </div>\n  </body>\n</html>\n",
+        "options": {
+          "responseCode": 403,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -608,
+        224
+      ],
+      "id": "90d5cc40-5435-48f3-83fc-9bfaeaa161a9",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0537394a-faab-4d6e-bdac-26dcbdae38ef",
+              "name": "token",
+              "value": "={{ ($json.query.token || '').replace(/^\"+|\"+$/g, '').replace(/\\\\\"/g, '').trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1024,
+        0
+      ],
+      "id": "327429bc-51c0-409c-9056-3023b276da0c",
+      "name": "Token Normalization"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c9a9c0b6-4f12-4243-b7d9-2ba1c41c3b74",
+              "leftValue": "={{$json.token}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -768,
+        0
+      ],
+      "id": "4a722d40-fd91-4100-bbee-872fa9fa7adb",
+      "name": "Token Present?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH u AS (\n  SELECT 1\n  FROM users\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n  LIMIT 1\n),\nslide AS (\n  UPDATE users\n  SET token_expires_at = NOW() + INTERVAL '30 minutes'\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n    AND EXISTS (SELECT 1 FROM u)\n  RETURNING 1\n)\nSELECT\n  $1::text AS token,\n  CASE WHEN EXISTS (SELECT 1 FROM u) THEN 1 ELSE 0 END AS token_count;\n",
+        "options": {
+          "queryReplacement": "={{$json.token}}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -512,
+        -64
+      ],
+      "id": "ce990e98-2dbc-4526-b35a-00aa79628b74",
+      "name": "Validate Token + Refresh Expiry",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5d3cec2a-dd2a-4ac1-8465-6a034f2dee84",
+              "leftValue": "={{$json.token_count}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -304,
+        -64
+      ],
+      "id": "3531f5ea-e1bc-4425-ad32-e7817739d64d",
+      "name": "Token Valid?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT email, name, role\nFROM users\nWHERE token = $1\n  AND active = true\nLIMIT 1;\n",
+        "options": {
+          "queryReplacement": "={{$json.token}}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -96,
+        -160
+      ],
+      "id": "c9c19ee9-4ae5-4318-bc8c-7f7a6f416c57",
+      "name": "Load User By Token",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Token Normalization",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Normalization": {
+      "main": [
+        [
+          {
+            "node": "Token Present?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Present?": {
+      "main": [
+        [
+          {
+            "node": "Validate Token + Refresh Expiry",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Token + Refresh Expiry": {
+      "main": [
+        [
+          {
+            "node": "Token Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Valid?": {
+      "main": [
+        [
+          {
+            "node": "Load User By Token",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load User By Token": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "18bc0718-b20d-448a-9013-49bdeca44b9e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ed78ae6e681edbfae313d0e8063f75c68ae48b9e68d4728e17cb5150634a5de7"
+  },
+  "id": "wq_mFXFYElbVa3fSzwf1x",
+  "tags": []
+}

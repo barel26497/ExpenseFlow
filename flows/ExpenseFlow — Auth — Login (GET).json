@@ -1,0 +1,136 @@
+{
+  "name": "ExpenseFlow — Auth — Login (GET)",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "/expenseflow/auth/login",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -384,
+        -16
+      ],
+      "id": "2ec016d6-3725-4df9-a203-59f7748f0999",
+      "name": "Webhook",
+      "webhookId": "3adb8a06-828d-4ef7-80ed-63b6f5c1ccd9"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{$json.html}}\n",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        240,
+        -16
+      ],
+      "id": "5d4407ec-953e-4afb-a0f3-9151790cf63b",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e9003d65-e592-483b-93f1-b3fef6f5b441",
+              "name": "error",
+              "value": "{{$json.query?.error || \"\"}}",
+              "type": "string"
+            },
+            {
+              "id": "b5d247fa-c5ff-44ca-bd42-0459a8c4b909",
+              "name": "email_prefill",
+              "value": "{{$json.query?.email || \"\"}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -176,
+        -16
+      ],
+      "id": "d2e3c5cc-2401-43e5-b04c-53dfb5cf7746",
+      "name": "Extract Login Query Params"
+    },
+    {
+      "parameters": {
+        "jsCode": "const error = String($json.query?.error || \"\");\nconst emailPrefill = String($json.query?.email || \"\");\n\nconst safe = (v) =>\n  String(v ?? \"\")\n    .replaceAll(\"&\", \"&amp;\")\n    .replaceAll(\"<\", \"&lt;\")\n    .replaceAll(\">\", \"&gt;\")\n    .replaceAll('\"', \"&quot;\")\n    .replaceAll(\"'\", \"&#039;\");\n\nconst html = `\n<!doctype html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n  <title>ExpenseFlow — Login</title>\n  <style>\n    :root{\n      --bg:#f6f7fb;\n      --card:#ffffff;\n      --text:#0f172a;\n      --muted:#64748b;\n      --border:#e7eaf3;\n      --shadow:0 12px 32px rgba(15,23,42,0.08);\n      --primary:#4f46e5;\n      --primary2:#4338ca;\n      --error-bg:#fef2f2;\n      --error-border:#fecaca;\n      --error-text:#991b1b;\n      --warn-bg:#fffbeb;\n      --warn-border:#fde68a;\n      --warn-text:#92400e;\n    }\n    *{ box-sizing:border-box; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }\n    body{\n      margin:0;\n      min-height:100vh;\n      background:var(--bg);\n      color:var(--text);\n    }\n\n    .topbar{\n      display:flex;\n      align-items:center;\n      justify-content:flex-start;\n      padding: 18px 18px 0;\n    }\n\n    .logo{\n      display:flex;\n      align-items:center;\n      gap:10px;\n      user-select:none;\n    }\n    .logo svg{ height:42px; }\n\n    .center{\n      min-height: calc(100vh - 80px);\n      display:flex;\n      align-items:center;\n      justify-content:center;\n    }\n\n    .wrap{ width:100%; max-width:420px; padding:18px; }\n    .card{\n      background:var(--card);\n      border:1px solid var(--border);\n      border-radius:14px;\n      box-shadow:var(--shadow);\n      padding:24px;\n    }\n    .title{ font-size:26px; font-weight:800; margin:0; }\n    .subtitle{ margin:6px 0 18px; color:var(--muted); font-size:14px; }\n    .msg{\n      border-radius:10px;\n      padding:10px 12px;\n      font-size:13px;\n      margin-bottom:14px;\n      border:1px solid var(--border);\n      background:#f8fafc;\n      color:var(--text);\n    }\n    .msg.error{ background:var(--error-bg); border-color:var(--error-border); color:var(--error-text); }\n    .msg.warn{ background:var(--warn-bg); border-color:var(--warn-border); color:var(--warn-text); }\n    label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; }\n    .inp{\n      width:100%;\n      height:42px;\n      border-radius:10px;\n      border:1px solid var(--border);\n      padding:0 12px;\n      font-size:14px;\n      margin-bottom:14px;\n      outline:none;\n    }\n    .inp:focus{\n      border-color:rgba(79,70,229,0.45);\n      box-shadow:0 0 0 3px rgba(79,70,229,0.12);\n    }\n    .btn{\n      width:100%;\n      height:44px;\n      border-radius:12px;\n      border:1px solid rgba(79,70,229,0.25);\n      background:linear-gradient(180deg,var(--primary),var(--primary2));\n      color:#ffffff;\n      font-size:15px;\n      font-weight:700;\n      cursor:pointer;\n      box-shadow:0 10px 20px rgba(79,70,229,0.22);\n    }\n    .btn:hover{ filter:brightness(1.05); }\n    .foot{ margin-top:16px; text-align:center; font-size:12px; color:var(--muted); }\n\n    @media (max-width: 520px){\n      .topbar{ padding: 14px 14px 0; }\n      .center{ min-height: calc(100vh - 68px); }\n    }\n  </style>\n</head>\n<body>\n\n  <div class=\"topbar\">\n    <div class=\"logo\">\n      <svg width=\"220\" height=\"50\" viewBox=\"0 0 220 50\" xmlns=\"http://www.w3.org/2000/svg\">\n        <defs>\n          <linearGradient id=\"flowGradient\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n            <stop offset=\"0%\" stop-color=\"#2563EB\"/>\n            <stop offset=\"100%\" stop-color=\"#06B6D4\"/>\n          </linearGradient>\n        </defs>\n        <circle cx=\"25\" cy=\"25\" r=\"20\" fill=\"url(#flowGradient)\" />\n        <path d=\"M15 25 Q25 10 35 25 T55 25\" stroke=\"white\" stroke-width=\"3\" fill=\"none\" />\n        <text x=\"60\" y=\"32\" font-family=\"Segoe UI, Arial, sans-serif\" font-size=\"22\" font-weight=\"600\" fill=\"#1E293B\">\n          ExpenseFlow\n        </text>\n      </svg>\n    </div>\n  </div>\n\n  <div class=\"center\">\n    <div class=\"wrap\">\n      <div class=\"card\">\n        <h1 class=\"title\">ExpenseFlow</h1>\n        <div class=\"subtitle\">Sign in to continue</div>\n\n        ${error ? `<div class=\"msg error\">${safe(error)}</div>` : ``}\n\n        <form method=\"POST\" action=\"/webhook/expenseflow/auth/login\" autocomplete=\"on\">\n          <label for=\"email\">Email</label>\n          <input class=\"inp\" id=\"email\" name=\"email\" type=\"email\" placeholder=\"you@company.com\" value=\"${safe(emailPrefill)}\" required />\n\n          <label for=\"password\">Password</label>\n          <input class=\"inp\" id=\"password\" name=\"password\" type=\"password\" placeholder=\"Your password\" required />\n\n          <button class=\"btn\" type=\"submit\">Sign in</button>\n        </form>\n\n        <div class=\"foot\">Access is managed by administrators</div>\n      </div>\n    </div>\n  </div>\n\n</body>\n</html>\n`;\n\nreturn [{ json: { html } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        32,
+        -16
+      ],
+      "id": "2f814a47-4f7e-432d-a6fc-4818fc4f143f",
+      "name": "Render Login Page"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Login Query Params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Login Query Params": {
+      "main": [
+        [
+          {
+            "node": "Render Login Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Login Page": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "7b67c846-9133-401f-ac6f-8a21cbee82e1",
+  "meta": {
+    "instanceId": "ed78ae6e681edbfae313d0e8063f75c68ae48b9e68d4728e17cb5150634a5de7"
+  },
+  "id": "ZEABcmtjbSohl-15aFMfM",
+  "tags": []
+}

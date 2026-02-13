@@ -1,0 +1,438 @@
+{
+  "name": "ExpenseFlow — Admin — Update Role (POST)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "expenseflow/admin/user/update-role",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2096,
+        -16
+      ],
+      "id": "6877cdbc-58be-4aac-bcb5-efbaec45e73c",
+      "name": "Webhook",
+      "webhookId": "ee762392-9b92-445b-bb9f-446e4872f759"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <title>401 – Unauthorized</title>\n\n    <style>\n      :root {\n        --bg: #f5f7fb;\n        --card: #ffffff;\n        --text: #1f2937;\n        --muted: #6b7280;\n        --accent: #f59e0b; /* amber for auth issues */\n      }\n\n      * {\n        box-sizing: border-box;\n      }\n\n      body {\n        margin: 0;\n        min-height: 100vh;\n        font-family: system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n          Roboto, sans-serif;\n        background: var(--bg);\n        display: flex;\n        align-items: center;\n        justify-content: center;\n        padding: 24px;\n        color: var(--text);\n      }\n\n      .card {\n        background: var(--card);\n        padding: 36px 40px;\n        border-radius: 14px;\n        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);\n        text-align: center;\n        max-width: 420px;\n        width: 100%;\n      }\n\n      .code {\n        font-size: 3rem;\n        font-weight: 800;\n        color: var(--accent);\n        margin-bottom: 8px;\n      }\n\n      h1 {\n        font-size: 1.4rem;\n        margin: 0 0 10px;\n      }\n\n      p {\n        margin: 0;\n        color: var(--muted);\n        font-size: 0.95rem;\n      }\n    </style>\n  </head>\n\n  <body>\n    <div class=\"card\">\n      <div class=\"code\">401</div>\n      <h1>Unauthorized</h1>\n      <p>Your session is missing or the access token is invalid.</p>\n    </div>\n  </body>\n</html>\n",
+        "options": {
+          "responseCode": 401,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -1232,
+        256
+      ],
+      "id": "54a2829e-05ad-44aa-b3e2-2b9ad550cb43",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "{\n  \"status\": \"error\",\n  \"message\": \"Access denied. This area is restricted to administrators only / Token is invalid\"\n}\n",
+        "options": {
+          "responseCode": 403,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -352,
+        128
+      ],
+      "id": "806580b6-d1f2-451a-829d-a2d05e43da4f",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{\n  $json.ok\n    ? (\"OK: role updated to \" + $json.new_role + \" for \" + $json.subject_email)\n    : (\n        \"ERR: \" + (\n          !$json.user_exists ? \"user not found\"\n          : !$json.not_self ? \"cannot change yourself\"\n          : !$json.role_ok ? \"invalid role\"\n          : !$json.supervisor_ok ? \"supervisor_email required and must be an active SUPERVISOR\"\n          : \"update failed\"\n        )\n      )\n}}\n",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        80,
+        -112
+      ],
+      "id": "5bdb8321-f59b-429f-b67b-4801dc220c82",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0537394a-faab-4d6e-bdac-26dcbdae38ef",
+              "name": "token",
+              "value": "={{ ($json.query.token || '').replace(/^\"+|\"+$/g,'').replace(/\\\\\"/g,'').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "ea10d6ee-a212-46b6-9cb0-a1869f00608c",
+              "name": "target_email",
+              "value": "={{ String($json.body?.email ?? '').trim().toLowerCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "1cab458c-0e55-41a5-bc66-df40799a64d8",
+              "name": "new_role",
+              "value": "={{ String($json.body?.new_role ?? '').trim().toUpperCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "a06d9452-a601-4585-b7c5-8b9a2357b286",
+              "name": "supervisor_email",
+              "value": "={{ String($json.body?.supervisor_email ?? $json.supervisor_email ?? '').trim().toLowerCase() }}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1808,
+        -16
+      ],
+      "id": "61963557-05bd-4cb7-8a30-b8bebd2da7e1",
+      "name": "Prepare Role Update Input"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c9a9c0b6-4f12-4243-b7d9-2ba1c41c3b74",
+              "leftValue": "={{$json.token}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1504,
+        -16
+      ],
+      "id": "c32c6902-da98-4c55-9505-b5879423aff9",
+      "name": "Token Present"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH u AS (\n  SELECT email, name, role, token, active\n  FROM users\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n  LIMIT 1\n),\nslide AS (\n  UPDATE users\n  SET token_expires_at = NOW() + INTERVAL '30 minutes'\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n    AND EXISTS (SELECT 1 FROM u)\n  RETURNING 1\n)\nSELECT\n  (u.email IS NOT NULL) AS ok,\n  u.email,\n  u.name,\n  u.role,\n  u.token,\n  u.active\nFROM (SELECT 1) dummy\nLEFT JOIN u ON true;\n",
+        "options": {
+          "queryReplacement": "={{ $json.token }}\n"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1184,
+        -16
+      ],
+      "id": "f71f0695-758a-4074-b3f3-2815a57b59c0",
+      "name": "Validate Token & Extend",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "38728fcc-fa76-4ffa-8dc1-fa44f0f60051",
+              "name": "admin_email",
+              "value": "={{$json.email}}",
+              "type": "string"
+            },
+            {
+              "id": "c87d5cdd-f4aa-44b6-a8c3-d74cfc224331",
+              "name": "admin_name",
+              "value": "={{$json.name}}",
+              "type": "string"
+            },
+            {
+              "id": "340171a0-359f-4069-8387-e444608187b8",
+              "name": "current_user_role",
+              "value": "={{$json.role}}",
+              "type": "string"
+            },
+            {
+              "id": "767eaf3e-7841-4cb6-aa3e-c10463975141",
+              "name": "token",
+              "value": "={{$json.token}}",
+              "type": "string"
+            },
+            {
+              "id": "9f595a66-e8cc-413a-997b-113d9ca9a192",
+              "name": "current_user_active",
+              "value": "={{$json.active}}",
+              "type": "string"
+            },
+            {
+              "id": "6de177ff-2b73-4b36-97b9-be0959d88ff0",
+              "name": "target_email",
+              "value": "={{ $node[\"Prepare Role Update Input\"].json.target_email }}",
+              "type": "string"
+            },
+            {
+              "id": "e9d155cc-6356-4449-b540-59ccc72eb55e",
+              "name": "ok",
+              "value": "={{ $json.ok }}",
+              "type": "string"
+            },
+            {
+              "id": "b7c3c7d7-0da0-483b-8ab1-824f23cf6cc8",
+              "name": "new_role",
+              "value": "={{ $node[\"Prepare Role Update Input\"].json.new_role }}",
+              "type": "string"
+            },
+            {
+              "id": "b4b0b318-aabc-4947-99f1-7fe63f176ae0",
+              "name": "supervisor_email",
+              "value": "={{ $node[\"Prepare Role Update Input\"].json.supervisor_email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -880,
+        -16
+      ],
+      "id": "3d65a7f5-7e96-44d9-8595-515c34e27b02",
+      "name": "Prepare Role update"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0e2dccb1-fca0-42dd-8724-c9f5c379a670",
+              "leftValue": "={{$json.current_user_role}}",
+              "rightValue": "ADMIN",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "269a824e-fca9-46a3-827a-8b3a1ef08892",
+              "leftValue": "={{$json.ok}}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -576,
+        -16
+      ],
+      "id": "3e43da12-2688-4d49-a675-d288a662882f",
+      "name": "Permission Check"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH input AS (\n  SELECT\n    lower(trim($1)) AS target_email_lc,\n    lower(trim($2)) AS admin_email_lc,\n    upper(trim($3)) AS new_role_u,\n    NULLIF(lower(trim(COALESCE($4, ''))), '') AS new_supervisor_email_lc\n),\nsubject AS (\n  SELECT u.email, u.role, u.supervisor_email\n  FROM users u\n  JOIN input i ON lower(trim(u.email)) = i.target_email_lc\n  LIMIT 1\n),\nsup AS (\n  SELECT u.email\n  FROM users u\n  JOIN input i ON lower(trim(u.email)) = i.new_supervisor_email_lc\n  WHERE upper(u.role) = 'SUPERVISOR'\n    AND u.active = true\n  LIMIT 1\n),\nguard AS (\n  SELECT\n    EXISTS(SELECT 1 FROM subject) AS user_exists,\n    ((SELECT target_email_lc FROM input) <> (SELECT admin_email_lc FROM input)) AS not_self,\n    ((SELECT new_role_u FROM input) IN ('ADMIN','SUPERVISOR','EMPLOYEE')) AS role_ok,\n    (\n      (SELECT new_role_u FROM input) <> 'EMPLOYEE'\n      OR (\n        (SELECT new_supervisor_email_lc FROM input) IS NOT NULL\n        AND EXISTS(SELECT 1 FROM sup)\n      )\n    ) AS supervisor_ok\n),\ndo_update AS (\n  UPDATE users u\n  SET\n    role = (SELECT new_role_u FROM input),\n    supervisor_email = CASE\n      WHEN (SELECT new_role_u FROM input) = 'EMPLOYEE' THEN (SELECT email FROM sup)\n      ELSE NULL\n    END\n  WHERE lower(trim(u.email)) = (SELECT target_email_lc FROM input)\n    AND (SELECT not_self FROM guard)\n    AND (SELECT role_ok FROM guard)\n    AND (SELECT supervisor_ok FROM guard)\n  RETURNING u.email, u.role, u.supervisor_email\n)\nSELECT\n  (SELECT user_exists FROM guard) AS user_exists,\n  (SELECT not_self FROM guard) AS not_self,\n  (SELECT role_ok FROM guard) AS role_ok,\n  (SELECT supervisor_ok FROM guard) AS supervisor_ok,\n  EXISTS(SELECT 1 FROM do_update) AS ok,\n  COALESCE((SELECT role FROM do_update), (SELECT role FROM subject), '') AS new_role,\n  COALESCE((SELECT supervisor_email FROM do_update), '') AS new_supervisor_email,\n  $1::text AS subject_email;\n",
+        "options": {
+          "queryReplacement": "={{ $json.target_email }}\n{{ $json.admin_email }}\n{{ $json.new_role }}\n{{ String($json.supervisor_email ?? '') }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -272,
+        -112
+      ],
+      "id": "75ba438f-c206-4575-a875-8aea99f33245",
+      "name": "Change User Role",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Role Update Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Role Update Input": {
+      "main": [
+        [
+          {
+            "node": "Token Present",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Present": {
+      "main": [
+        [
+          {
+            "node": "Validate Token & Extend",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Token & Extend": {
+      "main": [
+        [
+          {
+            "node": "Prepare Role update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Role update": {
+      "main": [
+        [
+          {
+            "node": "Permission Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Permission Check": {
+      "main": [
+        [
+          {
+            "node": "Change User Role",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Change User Role": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "189f7575-3314-42cd-a11f-dfa2dfc19a2e",
+  "meta": {
+    "instanceId": "ed78ae6e681edbfae313d0e8063f75c68ae48b9e68d4728e17cb5150634a5de7"
+  },
+  "id": "O04m4UNLowj-5VGt6iHnL",
+  "tags": []
+}

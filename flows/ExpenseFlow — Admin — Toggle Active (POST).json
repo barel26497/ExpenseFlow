@@ -1,0 +1,415 @@
+{
+  "name": "ExpenseFlow — Admin — Toggle Active (POST)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "expenseflow/admin/user/toggle-active",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -624,
+        0
+      ],
+      "id": "106359da-f3a4-4c0d-ab3d-613aadea0ce0",
+      "name": "Webhook",
+      "webhookId": "ee762392-9b92-445b-bb9f-446e4872f759"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "{\n  \"status\": \"error\",\n  \"message\": \"Access denied. This area is restricted to administrators only / Token is invalid\"\n}\n",
+        "options": {
+          "responseCode": 401,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        240,
+        272
+      ],
+      "id": "ba96234a-d415-4063-bbf2-aeccbdb83948",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "{\n  \"status\": \"error\",\n  \"message\": \"Access denied. This area is restricted to administrators only / Token is invalid\"\n}\n",
+        "options": {
+          "responseCode": 403,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1120,
+        144
+      ],
+      "id": "7eda8c4a-8ab6-49c3-b2b0-258471aed1c2",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.ok ? (\"OK: \" + ($json.new_active ? \"activated\" : \"deactivated\") + \" \" + $json.subject_email) : (\"ERR: \" + ($json.user_exists ? ($json.not_self ? \"update failed\" : \"cannot change yourself\") : \"user not found\")) }}\n",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1408,
+        -96
+      ],
+      "id": "58da4b9f-3409-4e28-993b-9cc06f8c50ce",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0537394a-faab-4d6e-bdac-26dcbdae38ef",
+              "name": "token",
+              "value": "={{ ($json.query.token || '').replace(/^\"+|\"+$/g,'').replace(/\\\\\"/g,'').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "ea10d6ee-a212-46b6-9cb0-a1869f00608c",
+              "name": "target_email",
+              "value": "={{ String($json.body?.email ?? '').trim().toLowerCase() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -336,
+        0
+      ],
+      "id": "855e63d6-b6d8-4f0e-acab-cfca11c1655a",
+      "name": "Prepare Admin Target User Input"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c9a9c0b6-4f12-4243-b7d9-2ba1c41c3b74",
+              "leftValue": "={{$json.token}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -32,
+        0
+      ],
+      "id": "4da5b423-9806-4ea8-95d0-11c941b0c46d",
+      "name": "Check Token Exists"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH u AS (\n  SELECT email, name, role, token, active\n  FROM users\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n  LIMIT 1\n),\nslide AS (\n  UPDATE users\n  SET token_expires_at = NOW() + INTERVAL '30 minutes'\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n    AND EXISTS (SELECT 1 FROM u)\n  RETURNING 1\n)\nSELECT\n  (u.email IS NOT NULL) AS ok,\n  u.email,\n  u.name,\n  u.role,\n  u.token,\n  u.active\nFROM (SELECT 1) dummy\nLEFT JOIN u ON true;\n",
+        "options": {
+          "queryReplacement": "={{ $json.token }}\n"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        288,
+        0
+      ],
+      "id": "3e78fbfa-a2a3-48bd-b954-a473c695e82a",
+      "name": "Validate Token + Refresh Expiry",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "38728fcc-fa76-4ffa-8dc1-fa44f0f60051",
+              "name": "admin_email",
+              "value": "={{$json.email}}",
+              "type": "string"
+            },
+            {
+              "id": "c87d5cdd-f4aa-44b6-a8c3-d74cfc224331",
+              "name": "admin_name",
+              "value": "={{$json.name}}",
+              "type": "string"
+            },
+            {
+              "id": "340171a0-359f-4069-8387-e444608187b8",
+              "name": "current_user_role",
+              "value": "={{$json.role}}",
+              "type": "string"
+            },
+            {
+              "id": "767eaf3e-7841-4cb6-aa3e-c10463975141",
+              "name": "token",
+              "value": "={{$json.token}}",
+              "type": "string"
+            },
+            {
+              "id": "9f595a66-e8cc-413a-997b-113d9ca9a192",
+              "name": "current_user_active",
+              "value": "={{$json.active}}",
+              "type": "string"
+            },
+            {
+              "id": "6de177ff-2b73-4b36-97b9-be0959d88ff0",
+              "name": "target_email",
+              "value": "={{ $node[\"Prepare Admin Target User Input\"].json.target_email }}",
+              "type": "string"
+            },
+            {
+              "id": "e9d155cc-6356-4449-b540-59ccc72eb55e",
+              "name": "ok",
+              "value": "={{ $json.ok }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        592,
+        0
+      ],
+      "id": "e83ee041-1f09-4414-9fc9-bd2d5ed45f24",
+      "name": "Prepare Target User Context"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0e2dccb1-fca0-42dd-8724-c9f5c379a670",
+              "leftValue": "={{$json.current_user_role}}",
+              "rightValue": "ADMIN",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "269a824e-fca9-46a3-827a-8b3a1ef08892",
+              "leftValue": "={{$json.ok}}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        896,
+        0
+      ],
+      "id": "f9db5b54-ea5b-4b4c-8b1e-a06bd3b4b918",
+      "name": "Admin Access"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH subject AS (\n  SELECT email, active\n  FROM users\n  WHERE lower(trim(email)) = lower(trim($1))\n  LIMIT 1\n),\nguard AS (\n  SELECT\n    EXISTS(SELECT 1 FROM subject) AS user_exists,\n    (lower(trim($1)) <> lower(trim($2))) AS not_self\n),\ndo_update AS (\n  UPDATE users\n  SET active = NOT active\n  WHERE lower(trim(email)) = lower(trim($1))\n    AND (lower(trim($1)) <> lower(trim($2)))\n  RETURNING email, active\n)\nSELECT\n  (SELECT user_exists FROM guard) AS user_exists,\n  (SELECT not_self FROM guard) AS not_self,\n  EXISTS(SELECT 1 FROM do_update) AS ok,\n  COALESCE((SELECT active FROM do_update), (SELECT active FROM subject), false) AS new_active,\n  $1::text AS subject_email;\n",
+        "options": {
+          "queryReplacement": "={{ $json.target_email }}\n{{ $json.admin_email }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1104,
+        -96
+      ],
+      "id": "2dca0dc6-31c0-43f2-918c-90449898d80f",
+      "name": "Toggle User Active Status",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Admin Target User Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Admin Target User Input": {
+      "main": [
+        [
+          {
+            "node": "Check Token Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Token Exists": {
+      "main": [
+        [
+          {
+            "node": "Validate Token + Refresh Expiry",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Token + Refresh Expiry": {
+      "main": [
+        [
+          {
+            "node": "Prepare Target User Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Target User Context": {
+      "main": [
+        [
+          {
+            "node": "Admin Access",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admin Access": {
+      "main": [
+        [
+          {
+            "node": "Toggle User Active Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Toggle User Active Status": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c61a8046-9906-4a5a-b15b-3acdba98f99d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ed78ae6e681edbfae313d0e8063f75c68ae48b9e68d4728e17cb5150634a5de7"
+  },
+  "id": "35jKBMNPXDOL8RzynEh09",
+  "tags": []
+}

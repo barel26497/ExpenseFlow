@@ -1,0 +1,470 @@
+{
+  "name": "ExpenseFlow — Admin Dashboard (GET)",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "app/expenseflow/admin/dashboard",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -640,
+        0
+      ],
+      "id": "e2c17a4c-ca0a-451c-9932-bc82eef3a004",
+      "name": "Webhook",
+      "webhookId": "e5955a66-5195-4460-88d8-421d5b9933b0"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <title>403 – Access Denied</title>\n\n    <style>\n      :root {\n        --bg: #f5f7fb;\n        --card: #ffffff;\n        --text: #1f2937;\n        --muted: #6b7280;\n        --accent: #ef4444;\n      }\n\n      * {\n        box-sizing: border-box;\n      }\n\n      body {\n        margin: 0;\n        min-height: 100vh;\n        font-family: system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n          Roboto, sans-serif;\n        background: var(--bg);\n        display: flex;\n        align-items: center;\n        justify-content: center;\n        padding: 24px;\n        color: var(--text);\n      }\n\n      .card {\n        background: var(--card);\n        padding: 36px 40px;\n        border-radius: 16px;\n        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.08);\n        text-align: center;\n        max-width: 420px;\n        width: 100%;\n      }\n\n      .code {\n        font-size: 3.2rem;\n        font-weight: 800;\n        color: var(--accent);\n        margin-bottom: 8px;\n      }\n\n      h1 {\n        font-size: 1.5rem;\n        margin: 0 0 10px;\n      }\n\n      p {\n        margin: 0;\n        color: var(--muted);\n        font-size: 0.95rem;\n        line-height: 1.5;\n      }\n    </style>\n  </head>\n\n  <body>\n    <div class=\"card\">\n      <div class=\"code\">403</div>\n      <h1>Access denied</h1>\n      <p>Token Is Invalid.</p>\n    </div>\n  </body>\n</html>\n",
+        "options": {
+          "responseCode": 403,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        656,
+        240
+      ],
+      "id": "538adc7f-453f-4b9c-ae9e-605830d3485e",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1504,
+        -368
+      ],
+      "id": "c8aed7b0-dd80-406e-8844-b29a93fb32f5",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.all().map((i) => i.json);\n\nconst has = (o, k) => Object.prototype.hasOwnProperty.call(o || {}, k);\n\nconst statsItem =\n  raw.find((x) => has(x, \"users_total\") || has(x, \"claims_total\")) || {};\n\nconst token = String(statsItem.token ?? \"\")\n  .replace(/^\"+|\"+$/g, \"\")\n  .replace(/\\\\\"/g, '\"')\n  .trim();\n\nconst admin = {\n  email: String(statsItem.email ?? \"admin@local\"),\n  name: String(statsItem.name ?? \"Admin\"),\n  role: String(statsItem.role ?? \"ADMIN\"),\n};\n\nconst asNum = (v) => {\n  const n = Number(v);\n  return Number.isFinite(n) ? n : 0;\n};\n\nconst stats = {\n  users_total: asNum(statsItem.users_total),\n  users_active: asNum(statsItem.users_active),\n  employees_active: asNum(statsItem.employees_active),\n  supervisors_active: asNum(statsItem.supervisors_active),\n  claims_total: asNum(statsItem.claims_total),\n  claims_pending: asNum(statsItem.claims_pending),\n  claims_approved: asNum(statsItem.claims_approved),\n  claims_declined: asNum(statsItem.claims_declined),\n};\n\nconst users = raw.filter(\n  (x) => x && x.email && !has(x, \"users_total\") && !has(x, \"claim_id\")\n);\n\nconst claims = raw.filter((x) => x && x.claim_id);\n\nconst safe = (v) =>\n  String(v ?? \"\")\n    .replaceAll(\"&\", \"&amp;\")\n    .replaceAll(\"<\", \"&lt;\")\n    .replaceAll(\">\", \"&gt;\")\n    .replaceAll('\"', \"&quot;\")\n    .replaceAll(\"'\", \"&#039;\");\n\nconst fmtInt = (n) => asNum(n).toLocaleString(\"en-US\");\n\nconst fmtMoney = (n) => {\n  const x = Number(n);\n  if (!Number.isFinite(x)) return safe(n);\n  return x.toLocaleString(\"en-US\", {\n    minimumFractionDigits: 2,\n    maximumFractionDigits: 2,\n  });\n};\n\nconst fmtDate = (d) => {\n  if (!d) return \"\";\n  const dt = new Date(d);\n  if (Number.isNaN(dt.getTime())) return safe(d);\n  return dt.toISOString().slice(0, 19).replace(\"T\", \" \");\n};\n\nconst statusBadge = (status) => {\n  const s = String(status ?? \"\").toUpperCase();\n  let cls = \"st st-neutral\";\n  if (s === \"APPROVED\") cls = \"st st-ok\";\n  else if (s === \"DECLINED\" || s === \"REJECTED\") cls = \"st st-bad\";\n  else if (s === \"SUBMITTED\" || s === \"PENDING\") cls = \"st st-warn\";\n  return `<span class=\"${cls}\">${safe(s || \"—\")}</span>`;\n};\n\nconst roleBadge = (role) => {\n  const r = String(role ?? \"\").toUpperCase();\n  let cls = \"rb rb-neutral\";\n  if (r === \"ADMIN\") cls = \"rb rb-admin\";\n  else if (r === \"SUPERVISOR\") cls = \"rb rb-sup\";\n  else if (r === \"EMPLOYEE\") cls = \"rb rb-emp\";\n  return `<span class=\"${cls}\">${safe(r || \"—\")}</span>`;\n};\n\nconst activeDot = (active) =>\n  active === true || String(active).toLowerCase() === \"true\"\n    ? `<span class=\"dot dot-on\"></span><span class=\"muted\">Active</span>`\n    : `<span class=\"dot dot-off\"></span><span class=\"muted\">Inactive</span>`;\n\nconst dashboardUrl = `/webhook/app/expenseflow/admin/dashboard?token=${encodeURIComponent(\n  token\n)}`;\nconst addUserUrl = `/webhook/expenseflow/admin/add-employee?token=${encodeURIComponent(\n  token\n)}`;\n\nconst rotateTokenUrl = `/webhook/expenseflow/admin/user/rotate-token?token=${encodeURIComponent(\n  token\n)}`;\nconst deleteUserUrl = `/webhook/expenseflow/admin/user/delete-user?token=${encodeURIComponent(\n  token\n)}`;\nconst toggleActiveUrl = `/webhook/expenseflow/admin/user/toggle-active?token=${encodeURIComponent(\n  token\n)}`;\nconst updateRoleUrl = `/webhook/expenseflow/admin/user/update-role?token=${encodeURIComponent(\n  token\n)}`;\n\nconst loginUrl = `/webhook/app/expenseflow/login`;\n\nusers.sort((a, b) =>\n  String(a.email ?? \"\")\n    .toLowerCase()\n    .localeCompare(String(b.email ?? \"\").toLowerCase())\n);\n\nconst supervisors = users\n  .filter(\n    (u) =>\n      String(u.role ?? \"\").toUpperCase() === \"SUPERVISOR\" &&\n      (u.active === true || String(u.active).toLowerCase() === \"true\")\n  )\n  .map((u) => ({\n    email: String(u.email ?? \"\").trim(),\n    name: String(u.name ?? \"\").trim(),\n  }))\n  .filter((s) => s.email);\n\nsupervisors.sort((a, b) =>\n  String(a.name || a.email)\n    .toLowerCase()\n    .localeCompare(String(b.name || b.email).toLowerCase())\n);\n\nconst supervisorsOptionsHtml =\n  supervisors.length === 0\n    ? `<option value=\"\">No active supervisors</option>`\n    : `<option value=\"\">Select supervisor…</option>` +\n      supervisors\n        .map((s) => {\n          const label = s.name ? `${s.name} (${s.email})` : s.email;\n          return `<option value=\"${safe(s.email)}\">${safe(label)}</option>`;\n        })\n        .join(\"\");\n\nconst usersRows =\n  users.length === 0\n    ? `<tr><td class=\"empty\" colspan=\"6\">No users found.</td></tr>`\n    : users\n        .map((u) => {\n          const email = String(u.email ?? \"\");\n          const name = String(u.name ?? \"\");\n          const role = String(u.role ?? \"\");\n          const active =\n            u.active === true || String(u.active).toLowerCase() === \"true\";\n          const supName = String(u.supervisor_name ?? \"\");\n          const supEmail = String(u.supervisor_email ?? \"\");\n          const tokenVal = String(u.token ?? \"\");\n\n          const supLabel =\n            supEmail || supName\n              ? `<div class=\"cellMain\">${safe(\n                  supName || supEmail\n                )}</div><div class=\"cellSub\">${safe(\n                  supEmail && supName ? supEmail : \"\"\n                )}</div>`\n              : `<span class=\"muted\">—</span>`;\n\n          const disabled = active ? \"\" : \"disabled\";\n\n          return `\n<tr data-user-email=\"${safe(email)}\" data-active=\"${active ? \"true\" : \"false\"}\" data-sup-email=\"${safe(\n            String(supEmail ?? \"\").trim().toLowerCase()\n          )}\">\n  <td>\n    <div class=\"cellMain\">${safe(name || \"—\")}</div>\n    <div class=\"cellSub mono\">${safe(email || \"—\")}</div>\n  </td>\n  <td class=\"roleCell\">${roleBadge(role)}</td>\n  <td class=\"statusCell\" data-field=\"status\">${activeDot(active)}</td>\n  <td class=\"supCell\">${supLabel}</td>\n  <td class=\"mono tokenCell\" title=\"${safe(tokenVal)}\">${safe(tokenVal)}</td>\n  <td class=\"actionsCell\">\n    <div class=\"btnRow\">\n      <button class=\"btn btn-ghost\" data-act=\"toggle\" data-email=\"${safe(\n        email\n      )}\" ${email ? \"\" : \"disabled\"}>${active ? \"Deactivate\" : \"Activate\"}</button>\n\n      <button class=\"btn btn-danger\" data-act=\"delete\" data-email=\"${safe(\n        email\n      )}\" ${email ? \"\" : \"disabled\"}>Delete user</button>\n\n      <button class=\"btn btn-primary\" data-act=\"rotate\" data-email=\"${safe(\n        email\n      )}\" ${email ? \"\" : \"disabled\"}>Rotate token</button>\n    </div>\n\n    <div class=\"btnRow\">\n      <select class=\"sel\" data-sel=\"role\" data-email=\"${safe(email)}\" ${disabled}>\n        <option value=\"ADMIN\" ${\n          String(role).toUpperCase() === \"ADMIN\" ? \"selected\" : \"\"\n        }>ADMIN</option>\n        <option value=\"SUPERVISOR\" ${\n          String(role).toUpperCase() === \"SUPERVISOR\" ? \"selected\" : \"\"\n        }>SUPERVISOR</option>\n        <option value=\"EMPLOYEE\" ${\n          String(role).toUpperCase() === \"EMPLOYEE\" ? \"selected\" : \"\"\n        }>EMPLOYEE</option>\n      </select>\n\n      <select class=\"sel\" data-sel=\"roleSup\" data-email=\"${safe(\n        email\n      )}\" ${disabled} style=\"display:none\">\n        ${supervisorsOptionsHtml}\n      </select>\n\n      <button class=\"btn btn-ghost\" data-act=\"role\" data-email=\"${safe(\n        email\n      )}\" ${disabled}>Update</button>\n    </div>\n  </td>\n</tr>`;\n        })\n        .join(\"\");\n\nconst claimsRows =\n  claims.length === 0\n    ? `<tr><td class=\"empty\" colspan=\"9\">No claims found.</td></tr>`\n    : claims\n        .map((c) => {\n          const claimId = String(c.claim_id ?? \"\");\n          const employeeName = String(c.employee_name ?? \"\");\n          const employeeEmail = String(c.employee_email ?? \"\");\n          const approverName = String(c.approver_name ?? \"\");\n          const approverEmail = String(c.approver_email ?? \"\");\n          const amount = c.amount;\n          const currency = String(c.currency ?? \"ILS\");\n          const category = String(c.category ?? \"\");\n          const merchant = String(c.merchant ?? \"\");\n          const status = String(c.status ?? \"\");\n          const submitted = fmtDate(c.submitted_at);\n          const approved = fmtDate(c.approved_at);\n          const notes = c.decision_notes;\n\n          return `\n<tr>\n  <td class=\"mono\">${safe(claimId)}</td>\n  <td>\n    <div class=\"cellMain\">${safe(employeeName || \"—\")}</div>\n    <div class=\"cellSub mono\">${safe(employeeEmail || \"—\")}</div>\n  </td>\n  <td>\n    <div class=\"cellMain\">${safe(approverName || \"—\")}</div>\n    <div class=\"cellSub mono\">${safe(approverEmail || \"—\")}</div>\n  </td>\n  <td class=\"mono\">${safe(currency)} ${fmtMoney(amount)}</td>\n  <td>\n    <div class=\"cellMain\">${safe(category || \"—\")}</div>\n    <div class=\"cellSub\">${safe(merchant || \"\")}</div>\n  </td>\n  <td>${statusBadge(status)}</td>\n  <td class=\"mono\">${safe(submitted || \"—\")}</td>\n  <td class=\"mono\">${safe(approved || \"—\")}</td>\n  <td>${notes ? safe(notes) : `<span class=\"muted\">—</span>`}</td>\n</tr>`;\n        })\n        .join(\"\");\n\nconst html = `<!doctype html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n  <title>ExpenseFlow — Admin Dashboard</title>\n  <style>\n    :root{\n      --bg:#070a14;\n      --bg2:#090e1d;\n      --card: rgba(12, 17, 40, 0.72);\n      --card2: rgba(12, 17, 40, 0.58);\n      --border: rgba(255,255,255,0.08);\n      --text:#e8ecff;\n      --muted: rgba(232,236,255,0.62);\n      --shadow: 0 20px 80px rgba(0,0,0,0.55);\n      --primary:#6d5efc;\n      --primary2:#8a7cff;\n      --chip:#131b3e;\n      --ok:#22c55e;\n      --bad:#fb7185;\n      --warn:#fbbf24;\n      --neutral:#94a3b8;\n      --glass: rgba(255,255,255,0.04);\n    }\n\n    *{ box-sizing:border-box; }\n    html, body { height: 100%; }\n    body{\n      margin:0;\n      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;\n      color: var(--text);\n      background: linear-gradient(180deg, var(--bg), var(--bg2));\n      min-height: 100vh;\n    }\n    body::before{\n      content:\"\";\n      position: fixed;\n      inset: 0;\n      pointer-events: none;\n      background:\n        radial-gradient(900px 520px at 18% 18%, rgba(109,94,252,0.30), transparent 60%),\n        radial-gradient(820px 520px at 78% 12%, rgba(138,124,255,0.20), transparent 62%),\n        radial-gradient(900px 620px at 50% 0%, rgba(55,150,255,0.12), transparent 70%);\n      opacity: 1;\n    }\n\n    .pageTop{\n      position: relative;\n      max-width: 1320px;\n      margin: 22px auto 14px;\n      padding: 0 18px;\n      display:flex;\n      align-items:center;\n      justify-content:space-between;\n      gap: 12px;\n    }\n\n    .brand{\n      display:flex;\n      align-items:center;\n      gap: 10px;\n      text-decoration:none;\n      color: var(--text);\n      user-select:none;\n    }\n\n    .brand svg{\n      width: 44px;\n      height: 44px;\n      flex: 0 0 auto;\n      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.45));\n    }\n\n    .brandText{\n      display:flex;\n      flex-direction:column;\n      line-height: 1.05;\n    }\n\n    .brandText .name{\n      font-weight: 950;\n      letter-spacing: .2px;\n      font-size: 16px;\n      color: rgba(255,255,255,0.96);\n    }\n\n    .brandText .sub{\n      margin-top: 3px;\n      font-size: 11px;\n      color: var(--muted);\n      letter-spacing: .12em;\n      text-transform: uppercase;\n    }\n\n    .topActions{\n      display:flex;\n      align-items:center;\n      gap: 10px;\n      flex-wrap: wrap;\n      justify-content:flex-end;\n    }\n\n    .btn{\n      display:inline-flex;\n      align-items:center;\n      justify-content:center;\n      padding: 9px 12px;\n      border-radius: 12px;\n      border:1px solid var(--border);\n      background: rgba(255,255,255,0.03);\n      color: rgba(232,236,255,0.92);\n      font-weight: 900;\n      font-size: 12px;\n      text-decoration:none;\n      cursor:pointer;\n      user-select:none;\n      transition: transform .12s ease, background .12s ease;\n      white-space: nowrap;\n    }\n    .btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,0.06); }\n    .btn:disabled{ opacity: 0.45; cursor:not-allowed; transform:none; }\n\n    .btn-primary{\n      border-color: rgba(109,94,252,0.35);\n      background: linear-gradient(180deg, var(--primary), var(--primary2));\n      box-shadow: 0 14px 30px rgba(109,94,252,0.22);\n    }\n    .btn-primary:hover{ background: linear-gradient(180deg, var(--primary2), var(--primary)); }\n\n    .btn-ghost{\n      border-color: rgba(255,255,255,0.10);\n      background: rgba(255,255,255,0.02);\n    }\n\n    .wrap{\n      position: relative;\n      max-width: 1320px;\n      margin: 0 auto 60px;\n      padding: 0 18px;\n    }\n\n    .card{\n      background: var(--card);\n      border:1px solid var(--border);\n      border-radius: 18px;\n      box-shadow: var(--shadow);\n      overflow: hidden;\n      backdrop-filter: blur(10px);\n    }\n\n    .top{\n      display:flex;\n      gap:14px;\n      align-items:flex-start;\n      justify-content:space-between;\n      padding: 18px 20px;\n      border-bottom:1px solid var(--border);\n      background: linear-gradient(180deg, rgba(255,255,255,0.05), transparent);\n    }\n\n    .title{ font-size: 20px; font-weight: 900; margin:0; letter-spacing: 0.2px; }\n    .subtitle{ margin:6px 0 0; color: var(--muted); font-size: 12px; }\n\n    .rightTop{\n      display:flex;\n      gap:10px;\n      align-items:center;\n      justify-content:flex-end;\n      flex-wrap: wrap;\n    }\n\n    .pill{\n      display:inline-flex;\n      gap:8px;\n      align-items:center;\n      padding:8px 10px;\n      border-radius: 999px;\n      border:1px solid var(--border);\n      background: rgba(255,255,255,0.04);\n      color: var(--muted);\n      font-size: 12px;\n    }\n    .pill .tag{\n      padding: 3px 8px;\n      border-radius: 999px;\n      background: rgba(109,94,252,0.18);\n      color: rgba(232,236,255,0.92);\n      border: 1px solid rgba(109,94,252,0.25);\n      font-weight: 900;\n      letter-spacing: 0.2px;\n      font-size: 11px;\n    }\n\n    .grid{\n      display:grid;\n      grid-template-columns: repeat(4, 1fr);\n      gap: 12px;\n      padding: 14px 16px 18px;\n    }\n\n    .stat{\n      border:1px solid var(--border);\n      background: linear-gradient(180deg, var(--card2), rgba(255,255,255,0.02));\n      border-radius: 14px;\n      padding: 12px 14px;\n      min-height: 74px;\n    }\n    .stat .k{ color: var(--muted); font-size: 12px; }\n    .stat .v{ font-size: 22px; font-weight: 950; margin-top: 6px; letter-spacing: .2px; }\n\n    .sections{\n      display:flex;\n      flex-direction: column;\n      gap: 14px;\n      padding: 0 16px 16px;\n    }\n\n    .section{\n      border: 1px solid var(--border);\n      border-radius: 16px;\n      background: rgba(255,255,255,0.02);\n      overflow: hidden;\n    }\n\n    .sectionHead{\n      display:flex;\n      align-items:flex-start;\n      justify-content:space-between;\n      gap: 12px;\n      padding: 14px 14px 12px;\n      border-bottom: 1px solid var(--border);\n      background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent);\n    }\n    .sectionTitle{ font-weight: 950; margin:0; font-size: 14px; }\n    .sectionSub{ margin: 4px 0 0; color: var(--muted); font-size: 11px; }\n\n    .tableWrap{ overflow:auto; }\n    table{ width:100%; border-collapse: collapse; min-width: 980px; }\n    th, td{\n      padding: 12px 12px;\n      border-bottom:1px solid rgba(255,255,255,0.06);\n      font-size: 12px;\n      vertical-align: top;\n    }\n    th{\n      text-align:left;\n      color: rgba(232,236,255,0.70);\n      font-size: 11px;\n      letter-spacing: .12em;\n      text-transform: uppercase;\n      background: rgba(255,255,255,0.02);\n      position: sticky;\n      top: 0;\n      z-index: 1;\n    }\n    tr:hover td{ background: transparent; }\n    tr:hover{ background: rgba(255,255,255,0.02); }\n    tr:hover td{ box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), inset 0 -1px 0 rgba(255,255,255,0.04); }\n    .dot{ flex: 0 0 auto; }\n    .statusCell{\n      display:flex;\n      align-items:center;\n      gap:8px;\n      white-space: nowrap;\n      background: transparent !important;\n    }\n\n    .cellMain{ font-weight: 900; }\n    .cellSub{ color: var(--muted); font-size: 11px; margin-top: 3px; }\n    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace; }\n\n    .empty{\n      text-align:center;\n      color: var(--muted);\n      padding: 18px 12px;\n    }\n\n    .rb{\n      display:inline-flex;\n      align-items:center;\n      padding: 6px 10px;\n      border-radius: 999px;\n      border:1px solid rgba(255,255,255,0.10);\n      background: rgba(255,255,255,0.03);\n      font-weight: 950;\n      font-size: 11px;\n      letter-spacing: .08em;\n    }\n    .rb-admin{ border-color: rgba(109,94,252,0.35); background: rgba(109,94,252,0.14); }\n    .rb-sup{ border-color: rgba(55,150,255,0.30); background: rgba(55,150,255,0.10); }\n    .rb-emp{ border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.08); }\n    .rb-neutral{ border-color: rgba(148,163,184,0.25); background: rgba(148,163,184,0.08); }\n\n    .st{\n      display:inline-flex;\n      align-items:center;\n      padding: 6px 10px;\n      border-radius: 999px;\n      font-weight: 950;\n      font-size: 11px;\n      letter-spacing: .08em;\n      border:1px solid rgba(255,255,255,0.10);\n      background: rgba(255,255,255,0.03);\n    }\n    .st-ok{ border-color: rgba(34,197,94,0.30); background: rgba(34,197,94,0.10); }\n    .st-bad{ border-color: rgba(251,113,133,0.30); background: rgba(251,113,133,0.10); }\n    .st-warn{ border-color: rgba(251,191,36,0.30); background: rgba(251,191,36,0.10); }\n    .st-neutral{ border-color: rgba(148,163,184,0.25); background: rgba(148,163,184,0.08); }\n\n    .dot{\n      width: 10px; height: 10px; border-radius: 999px;\n      box-shadow: 0 0 0 3px rgba(255,255,255,0.04);\n    }\n    .dot-on{ background: var(--ok); }\n    .dot-off{ background: rgba(148,163,184,0.7); }\n\n    .actionsCell{ min-width: 420px; }\n    .btnRow{ display:flex; gap:8px; margin-bottom: 8px; flex-wrap: wrap; }\n    .btnRow:last-child{ margin-bottom: 0; }\n\n    .sel{\n      height: 34px;\n      border-radius: 12px;\n      border:1px solid rgba(255,255,255,0.10);\n      background: rgba(255,255,255,0.03);\n      color: rgba(232,236,255,0.92);\n      padding: 0 10px;\n      font-size: 12px;\n      outline: none;\n    }\n    .sel{ min-width: 170px; }\n    .sel:disabled{ opacity: 0.5; cursor:not-allowed; }\n\n    select,\n    option {\n      background-color: #0b1022;\n      color: #e8ecff;\n    }\n    option:checked {\n      background-color: #6d5efc;\n      color: #ffffff;\n    }\n    option:hover {\n      background-color: #6d5efc;\n      color: #ffffff;\n    }\n\n    .tokenCell{\n      max-width: 340px;\n      overflow:hidden;\n      text-overflow: ellipsis;\n      white-space: nowrap;\n    }\n\n    .footer{\n      display:flex;\n      justify-content:space-between;\n      gap: 12px;\n      padding: 12px 16px 16px;\n      color: var(--muted);\n      font-size: 11px;\n    }\n\n    .pagerBar{\n      display:flex;\n      justify-content:space-between;\n      align-items:center;\n      gap:10px;\n      padding: 10px 12px;\n      border-bottom: 1px solid rgba(255,255,255,0.06);\n      background: rgba(255,255,255,0.01);\n    }\n\n    .pagerLeft{\n      display:flex;\n      gap:8px;\n      align-items:center;\n      flex-wrap:wrap;\n    }\n\n    .pagerRight{\n      display:flex;\n      gap:8px;\n      align-items:center;\n      flex-wrap:wrap;\n      justify-content:flex-end;\n    }\n\n    .pgNums{\n      display:flex;\n      gap:6px;\n      align-items:center;\n    }\n\n    .pgNum{\n      width:34px;\n      height:34px;\n      border-radius:12px;\n      border:1px solid rgba(255,255,255,0.10);\n      background: rgba(255,255,255,0.03);\n      color: rgba(232,236,255,0.92);\n      font-weight:950;\n      font-size:12px;\n      cursor:pointer;\n    }\n\n    .pgNum:hover{\n      background: rgba(255,255,255,0.06);\n    }\n\n    .pgNum.active{\n      border-color: rgba(109,94,252,0.40);\n      background: rgba(109,94,252,0.18);\n    }\n\n    .btn-danger{\n      border-color: rgba(251,113,133,0.35);\n      background: rgba(251,113,133,0.10);\n      color: rgba(255,255,255,0.95);\n    }\n\n    .btn-danger:hover{\n      background: rgba(251,113,133,0.16);\n    }\n\n    @media (max-width: 1040px){\n      .grid{ grid-template-columns: repeat(2, 1fr); }\n    }\n    @media (max-width: 820px){\n      .pageTop{ flex-direction: column; align-items:flex-start; }\n      .topActions{ width:100%; justify-content:flex-start; }\n    }\n    @media (max-width: 620px){\n      .grid{ grid-template-columns: 1fr; }\n      .actionsCell{ min-width: 520px; }\n    }\n  </style>\n</head>\n<body>\n\n  <div class=\"pageTop\">\n    <a class=\"brand\" href=\"${safe(dashboardUrl)}\" aria-label=\"ExpenseFlow home\">\n      <svg viewBox=\"0 0 64 64\" xmlns=\"http://www.w3.org/2000/svg\" aria-hidden=\"true\">\n        <defs>\n          <linearGradient id=\"efg\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n            <stop offset=\"0%\" stop-color=\"#6d5efc\"/>\n            <stop offset=\"100%\" stop-color=\"#8a7cff\"/>\n          </linearGradient>\n        </defs>\n        <circle cx=\"32\" cy=\"32\" r=\"22\" fill=\"url(#efg)\" />\n        <path d=\"M18 32 Q32 18 46 32 T60 32\" stroke=\"rgba(255,255,255,0.95)\" stroke-width=\"4\" fill=\"none\" stroke-linecap=\"round\"/>\n      </svg>\n      <div class=\"brandText\">\n        <div class=\"name\">ExpenseFlow</div>\n        <div class=\"sub\">Admin</div>\n      </div>\n    </a>\n\n    <div class=\"topActions\">\n      <a class=\"btn btn-ghost\" href=\"/webhook/expenseflow/auth/logout?token=${encodeURIComponent(token)}\">Logout</a>\n    </div>\n  </div>\n\n  <div class=\"wrap\">\n    <div class=\"card\">\n\n      <div class=\"top\">\n        <div>\n          <h1 class=\"title\">Admin Dashboard</h1>\n          <p class=\"subtitle\">RBAC • Users • Claims • Admin actions</p>\n        </div>\n\n        <div class=\"rightTop\">\n          <div class=\"pill\">\n            <span class=\"tag\">ADMIN</span>\n            <span>Signed in as</span>\n            <strong>${safe(admin.name)}</strong>\n            <span>•</span>\n            <span class=\"mono\">${safe(admin.email)}</span>\n          </div>\n        </div>\n      </div>\n\n      <div class=\"grid\">\n        <div class=\"stat\"><div class=\"k\">Users (total)</div><div class=\"v\">${fmtInt(stats.users_total)}</div></div>\n        <div class=\"stat\"><div class=\"k\">Users (active)</div><div class=\"v\">${fmtInt(stats.users_active)}</div></div>\n        <div class=\"stat\"><div class=\"k\">Employees (active)</div><div class=\"v\">${fmtInt(stats.employees_active)}</div></div>\n        <div class=\"stat\"><div class=\"k\">Supervisors (active)</div><div class=\"v\">${fmtInt(stats.supervisors_active)}</div></div>\n\n        <div class=\"stat\"><div class=\"k\">Claims (total)</div><div class=\"v\">${fmtInt(stats.claims_total)}</div></div>\n        <div class=\"stat\"><div class=\"k\">Claims (pending)</div><div class=\"v\">${fmtInt(stats.claims_pending)}</div></div>\n        <div class=\"stat\"><div class=\"k\">Claims (approved)</div><div class=\"v\">${fmtInt(stats.claims_approved)}</div></div>\n        <div class=\"stat\"><div class=\"k\">Claims (declined)</div><div class=\"v\">${fmtInt(stats.claims_declined)}</div></div>\n      </div>\n\n      <div class=\"sections\">\n        <div class=\"section\">\n          <div class=\"sectionHead\">\n            <div>\n              <div class=\"sectionTitle\">Users</div>\n              <div class=\"sectionSub\">Manage activation, tokens, roles, and supervisor assignments.</div>\n            </div>\n            <div style=\"display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;\">\n              <a class=\"btn btn-ghost\" href=\"${safe(dashboardUrl)}\">Refresh</a>\n              <a class=\"btn btn-primary\" href=\"${safe(addUserUrl)}\">Add user</a>\n            </div>\n          </div>\n\n          <div class=\"pagerBar\">\n            <div class=\"pagerLeft\">\n              <span class=\"muted\">Showing</span>\n              <span id=\"uPgRange\" class=\"mono\"></span>\n              <span class=\"muted\">of</span>\n              <span id=\"uPgTotal\" class=\"mono\"></span>\n            </div>\n\n            <div class=\"pagerRight\">\n              <button class=\"btn btn-ghost\" id=\"uPgPrev\">Prev</button>\n              <div id=\"uPgNums\" class=\"pgNums\"></div>\n              <button class=\"btn btn-ghost\" id=\"uPgNext\">Next</button>\n\n              <select id=\"uPgSize\" class=\"sel\">\n                <option value=\"5\">5 / page</option>\n                <option value=\"10\" selected>10 / page</option>\n                <option value=\"20\">20 / page</option>\n                <option value=\"50\">50 / page</option>\n              </select>\n            </div>\n          </div>\n\n          <div class=\"tableWrap\">\n            <table>\n              <thead>\n                <tr>\n                  <th>User</th>\n                  <th>Role</th>\n                  <th>Status</th>\n                  <th>Supervisor</th>\n                  <th>Token</th>\n                  <th>Actions</th>\n                </tr>\n              </thead>\n              <tbody id=\"usersBody\">\n                ${usersRows}\n              </tbody>\n            </table>\n          </div>\n        </div>\n\n        <div class=\"section\">\n          <div class=\"sectionHead\">\n            <div>\n              <div class=\"sectionTitle\">All Claims (latest 100)</div>\n              <div class=\"sectionSub\">Audit view across the system. Approvals are handled on Supervisor dashboard.</div>\n            </div>\n            <a class=\"btn btn-ghost\" href=\"${safe(dashboardUrl)}\">Reload</a>\n          </div>\n\n          <div class=\"pagerBar\">\n            <div class=\"pagerLeft\">\n              <span class=\"muted\">Showing</span>\n              <span id=\"pgRange\" class=\"mono\"></span>\n              <span class=\"muted\">of</span>\n              <span id=\"pgTotal\" class=\"mono\"></span>\n            </div>\n\n            <div class=\"pagerRight\">\n              <button class=\"btn btn-ghost\" id=\"pgPrev\">Prev</button>\n              <div id=\"pgNums\" class=\"pgNums\"></div>\n              <button class=\"btn btn-ghost\" id=\"pgNext\">Next</button>\n\n              <select id=\"pgSize\" class=\"sel\">\n                <option value=\"10\">10 / page</option>\n                <option value=\"20\" selected>20 / page</option>\n                <option value=\"50\">50 / page</option>\n                <option value=\"100\">100 / page</option>\n              </select>\n            </div>\n          </div>\n\n          <div class=\"tableWrap\">\n            <table>\n              <thead>\n                <tr>\n                  <th>Claim ID</th>\n                  <th>Employee</th>\n                  <th>Approver</th>\n                  <th>Amount</th>\n                  <th>Category / Merchant</th>\n                  <th>Status</th>\n                  <th>Submitted</th>\n                  <th>Approved</th>\n                  <th>Decision Notes</th>\n                </tr>\n              </thead>\n              <tbody id=\"claimsBody\">\n                ${claimsRows}\n              </tbody>\n            </table>\n          </div>\n        </div>\n      </div>\n\n      <div class=\"footer\">\n        <div>Token: <span class=\"mono\">${safe(token)}</span></div>\n        <div>ExpenseFlow • n8n • PostgreSQL • Admin UI</div>\n      </div>\n    </div>\n  </div>\n\n  <script>\n  const TOKEN = ${JSON.stringify(token)};\n  const ENDPOINTS = {\n    rotate: ${JSON.stringify(rotateTokenUrl)},\n    toggle: ${JSON.stringify(toggleActiveUrl)},\n    role: ${JSON.stringify(updateRoleUrl)},\n    delete: ${JSON.stringify(deleteUserUrl)},\n    refresh: ${JSON.stringify(dashboardUrl)}\n  };\n\n  const escapeHTML = (v) =>\n    String(v ?? \"\")\n      .replaceAll(\"&\", \"&amp;\")\n      .replaceAll(\"<\", \"&lt;\")\n      .replaceAll(\">\", \"&gt;\")\n      .replaceAll('\"', \"&quot;\")\n      .replaceAll(\"'\", \"&#039;\");\n\n  const isTrue = (v) => {\n    if (v === true) return true;\n    if (v === false) return false;\n    if (typeof v === \"number\") return v === 1;\n    const s = String(v ?? \"\").toLowerCase().trim();\n    return s === \"true\" || s === \"t\" || s === \"1\" || s === \"yes\" || s === \"y\" || s === \"ok\";\n  };\n\n  const normEmail = (v) => String(v ?? \"\").trim().toLowerCase();\n\n  const roleBadgeHTML = (role) => {\n    const r = String(role || \"\").toUpperCase();\n    let cls = \"rb rb-neutral\";\n    if (r === \"ADMIN\") cls = \"rb rb-admin\";\n    else if (r === \"SUPERVISOR\") cls = \"rb rb-sup\";\n    else if (r === \"EMPLOYEE\") cls = \"rb rb-emp\";\n    return '<span class=\"' + cls + '\">' + escapeHTML(r || \"—\") + \"</span>\";\n  };\n\n  const statusDotHTML = (isActive) =>\n    isActive\n      ? '<span class=\"dot dot-on\"></span><span class=\"muted\">Active</span>'\n      : '<span class=\"dot dot-off\"></span><span class=\"muted\">Inactive</span>';\n\n  const supCellHTML = (supEmail) => {\n    const e = normEmail(supEmail);\n    if (!e) return '<span class=\"muted\">—</span>';\n    return '<div class=\"cellMain\">' + escapeHTML(e) + '</div><div class=\"cellSub\"></div>';\n  };\n\n  const tryParseJSON = (txt) => {\n    try { return JSON.parse(txt); } catch { return null; }\n  };\n\n  const normalizeData = (d) => {\n    if (!d) return null;\n    if (Array.isArray(d)) return d[0] ?? null;\n    if (typeof d === \"object\") {\n      if (Array.isArray(d.data)) return d.data[0] ?? null;\n      if (Array.isArray(d.result)) return d.result[0] ?? null;\n      if (d.json && typeof d.json === \"object\") return d.json;\n      return d;\n    }\n    return null;\n  };\n\n  const postJSON = async (url, body) => {\n    const res = await fetch(url, {\n      method: \"POST\",\n      headers: { \"Content-Type\": \"application/json\" },\n      body: JSON.stringify(body || {})\n    });\n\n    const txt = await res.text();\n    const parsed = tryParseJSON(txt);\n    const data = normalizeData(parsed);\n\n    if (!res.ok) {\n      const msg = data && (data.error || data.message)\n        ? (data.error || data.message)\n        : (txt || (\"HTTP \" + res.status));\n      throw new Error(String(msg));\n    }\n\n    return { txt, data };\n  };\n\n  const syncRoleSupervisorUI = (row) => {\n    if (!row) return;\n    const active = row.getAttribute(\"data-active\") === \"true\";\n    const roleSel = row.querySelector('select[data-sel=\"role\"]');\n    const roleSup = row.querySelector('select[data-sel=\"roleSup\"]');\n    if (!roleSel || !roleSup) return;\n\n    const role = String(roleSel.value || \"\").toUpperCase();\n    const needsSup = role === \"EMPLOYEE\";\n\n    roleSup.style.display = needsSup ? \"\" : \"none\";\n    roleSup.disabled = !active || !needsSup;\n  };\n\n  const setRowActiveUI = (email, isActive) => {\n    const row = document.querySelector('tr[data-user-email=\"' + CSS.escape(email) + '\"]');\n    if (!row) return;\n\n    row.setAttribute(\"data-active\", isActive ? \"true\" : \"false\");\n\n    const statusCell = row.querySelector('[data-field=\"status\"]');\n    if (statusCell) statusCell.innerHTML = statusDotHTML(isActive);\n\n    const toggleBtn = row.querySelector('button[data-act=\"toggle\"]');\n    if (toggleBtn) toggleBtn.textContent = isActive ? \"Deactivate\" : \"Activate\";\n\n    const roleSel = row.querySelector('select[data-sel=\"role\"]');\n    const roleBtn = row.querySelector('button[data-act=\"role\"]');\n    const roleSup = row.querySelector('select[data-sel=\"roleSup\"]');\n\n    const dis = !isActive;\n    if (roleSel) roleSel.disabled = dis;\n    if (roleBtn) roleBtn.disabled = dis;\n    if (roleSup) roleSup.disabled = dis;\n\n    syncRoleSupervisorUI(row);\n  };\n\n  const setRowRoleUI = (email, newRole, newSupervisorEmail) => {\n    const row = document.querySelector('tr[data-user-email=\"' + CSS.escape(email) + '\"]');\n    if (!row) return;\n\n    const roleU = String(newRole || \"\").toUpperCase();\n    const supE = roleU === \"EMPLOYEE\" ? normEmail(newSupervisorEmail) : \"\";\n\n    row.setAttribute(\"data-sup-email\", supE);\n\n    const roleCell = row.querySelector(\".roleCell\");\n    if (roleCell) roleCell.innerHTML = roleBadgeHTML(roleU);\n\n    const roleSel = row.querySelector('select[data-sel=\"role\"]');\n    if (roleSel) roleSel.value = roleU;\n\n    const supCell = row.querySelector(\".supCell\");\n    if (supCell) supCell.innerHTML = supCellHTML(supE);\n\n    const roleSup = row.querySelector('select[data-sel=\"roleSup\"]');\n    if (roleSup) {\n      if (roleU === \"EMPLOYEE\") {\n        if (supE) {\n          const opt = roleSup.querySelector('option[value=\"' + CSS.escape(supE) + '\"]');\n          roleSup.value = opt ? supE : \"\";\n        } else {\n          roleSup.value = \"\";\n        }\n      } else {\n        roleSup.value = \"\";\n      }\n    }\n\n    syncRoleSupervisorUI(row);\n  };\n\n  const setRowTokenUI = (email, newToken) => {\n    const row = document.querySelector('tr[data-user-email=\"' + CSS.escape(email) + '\"]');\n    if (!row) return;\n    const tokenCell = row.querySelector(\".tokenCell\");\n    if (tokenCell) {\n      tokenCell.textContent = String(newToken || \"\");\n      tokenCell.title = String(newToken || \"\");\n    }\n  };\n\n  const makePager = (cfg) => {\n    const getRows = () => Array.from(cfg.body.querySelectorAll(\"tr\"));\n\n    let pageSize = Number(cfg.pgSize.value) || cfg.defaultSize;\n    let page = 1;\n\n    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));\n\n    const renderNums = (pageCount) => {\n      cfg.pgNums.innerHTML = \"\";\n      const maxButtons = 7;\n\n      const mk = (n, label = null, isActive = false) => {\n        const b = document.createElement(\"button\");\n        b.className = \"pgNum\" + (isActive ? \" active\" : \"\");\n        b.type = \"button\";\n        b.textContent = label ?? String(n);\n        b.addEventListener(\"click\", () => {\n          page = n;\n          render();\n        });\n        cfg.pgNums.appendChild(b);\n      };\n\n      const mkDots = () => {\n        const s = document.createElement(\"span\");\n        s.className = \"muted\";\n        s.textContent = \"…\";\n        cfg.pgNums.appendChild(s);\n      };\n\n      if (pageCount <= maxButtons) {\n        for (let i = 1; i <= pageCount; i++) mk(i, null, i === page);\n        return;\n      }\n\n      mk(1, null, page === 1);\n\n      const left = Math.max(2, page - 1);\n      const right = Math.min(pageCount - 1, page + 1);\n\n      if (left > 2) mkDots();\n      for (let i = left; i <= right; i++) mk(i, null, i === page);\n      if (right < pageCount - 1) mkDots();\n\n      mk(pageCount, null, page === pageCount);\n    };\n\n    const render = () => {\n      const rows = getRows();\n      const total = rows.length;\n\n      const pageCount = Math.max(1, Math.ceil(total / pageSize));\n      page = clamp(page, 1, pageCount);\n\n      const start = (page - 1) * pageSize;\n      const end = Math.min(total, start + pageSize);\n\n      for (let i = 0; i < total; i++) {\n        rows[i].style.display = i >= start && i < end ? \"\" : \"none\";\n      }\n\n      cfg.pgTotal.textContent = String(total);\n      cfg.pgRange.textContent = total === 0 ? \"0–0\" : (start + 1) + \"–\" + end;\n      cfg.pgPrev.disabled = page <= 1;\n      cfg.pgNext.disabled = page >= pageCount;\n\n      renderNums(pageCount);\n    };\n\n    cfg.pgPrev.addEventListener(\"click\", () => {\n      page = Math.max(1, page - 1);\n      render();\n    });\n\n    cfg.pgNext.addEventListener(\"click\", () => {\n      const rows = getRows();\n      const total = rows.length;\n      const pageCount = Math.max(1, Math.ceil(total / pageSize));\n      page = Math.min(pageCount, page + 1);\n      render();\n    });\n\n    cfg.pgSize.addEventListener(\"change\", () => {\n      pageSize = Number(cfg.pgSize.value) || cfg.defaultSize;\n      page = 1;\n      render();\n    });\n\n    render();\n\n    return { render };\n  };\n\n  const claimsPagerInit = () => {\n    const body = document.getElementById(\"claimsBody\");\n    if (!body) return null;\n\n    const pgRange = document.getElementById(\"pgRange\");\n    const pgTotal = document.getElementById(\"pgTotal\");\n    const pgPrev = document.getElementById(\"pgPrev\");\n    const pgNext = document.getElementById(\"pgNext\");\n    const pgNums = document.getElementById(\"pgNums\");\n    const pgSize = document.getElementById(\"pgSize\");\n\n    if (!pgRange || !pgTotal || !pgPrev || !pgNext || !pgNums || !pgSize) return null;\n\n    return makePager({\n      body, pgRange, pgTotal, pgPrev, pgNext, pgNums, pgSize,\n      defaultSize: 20\n    });\n  };\n\n  const usersPagerInit = () => {\n    const body = document.getElementById(\"usersBody\");\n    if (!body) return null;\n\n    const pgRange = document.getElementById(\"uPgRange\");\n    const pgTotal = document.getElementById(\"uPgTotal\");\n    const pgPrev = document.getElementById(\"uPgPrev\");\n    const pgNext = document.getElementById(\"uPgNext\");\n    const pgNums = document.getElementById(\"uPgNums\");\n    const pgSize = document.getElementById(\"uPgSize\");\n\n    if (!pgRange || !pgTotal || !pgPrev || !pgNext || !pgNums || !pgSize) return null;\n\n    return makePager({\n      body, pgRange, pgTotal, pgPrev, pgNext, pgNums, pgSize,\n      defaultSize: 10\n    });\n  };\n\n  const CLAIMS_PAGER = claimsPagerInit();\n  const USERS_PAGER = usersPagerInit();\n\n  const initRoleSupPickers = () => {\n    const rows = Array.from(document.querySelectorAll('tr[data-user-email]'));\n    for (const row of rows) {\n      const roleSup = row.querySelector('select[data-sel=\"roleSup\"]');\n      const supEmail = normEmail(row.getAttribute(\"data-sup-email\") || \"\");\n      if (roleSup && supEmail) {\n        const hasOption = !!roleSup.querySelector('option[value=\"' + CSS.escape(supEmail) + '\"]');\n        if (hasOption) roleSup.value = supEmail;\n      }\n      syncRoleSupervisorUI(row);\n    }\n  };\n\n  initRoleSupPickers();\n\n  document.addEventListener(\"change\", (e) => {\n    const roleSel = e.target.closest('select[data-sel=\"role\"]');\n    if (!roleSel) return;\n    const row = roleSel.closest('tr[data-user-email]');\n    if (row) syncRoleSupervisorUI(row);\n  });\n\n  const explainRoleUpdateFail = (data) => {\n    if (!data) return \"Update failed.\";\n    if (\"not_self\" in data && String(data.not_self).toLowerCase() === \"false\") return \"You cannot modify yourself.\";\n    if (\"user_exists\" in data && String(data.user_exists).toLowerCase() === \"false\") return \"User not found.\";\n    if (\"role_ok\" in data && String(data.role_ok).toLowerCase() === \"false\") return \"Invalid role value.\";\n    if (\"supervisor_ok\" in data && String(data.supervisor_ok).toLowerCase() === \"false\") return \"Supervisor is required and must be an ACTIVE SUPERVISOR when setting role to EMPLOYEE.\";\n    return String(data.error || data.message || \"Update failed.\");\n  };\n\n  const onClick = async (e) => {\n    const btn = e.target.closest(\"button[data-act]\");\n    if (!btn) return;\n\n    const act = btn.getAttribute(\"data-act\");\n    const email = btn.getAttribute(\"data-email\") || \"\";\n\n    try {\n      btn.disabled = true;\n\n      if (act === \"rotate\") {\n        const { data } = await postJSON(ENDPOINTS.rotate, { token: TOKEN, email });\n        const ok = data ? (isTrue(data.ok) || isTrue(data.success) || isTrue(data.updated)) : true;\n        const newTok = data && (data.new_token || data.token);\n        if (!ok || !newTok) throw new Error((data && (data.error || data.message)) || \"Rotate failed\");\n        setRowTokenUI(email, String(newTok));\n        alert(\"Token rotated successfully.\");\n\n      } else if (act === \"toggle\") {\n        const row = document.querySelector('tr[data-user-email=\"' + CSS.escape(email) + '\"]');\n        const current = row ? (row.getAttribute(\"data-active\") === \"true\") : true;\n\n        const { data } = await postJSON(ENDPOINTS.toggle, { token: TOKEN, email });\n\n        const newActive =\n          (data && typeof data.new_active !== \"undefined\")\n            ? isTrue(data.new_active)\n            : !current;\n\n        setRowActiveUI(email, newActive);\n        alert(newActive ? \"User activated.\" : \"User deactivated.\");\n\n      } else if (act === \"delete\") {\n        const ok = confirm(\"Delete this user? This cannot be undone.\");\n        if (!ok) { btn.disabled = false; return; }\n\n        await postJSON(ENDPOINTS.delete, { token: TOKEN, email });\n\n        const row = document.querySelector('tr[data-user-email=\"' + CSS.escape(email) + '\"]');\n        if (row) row.remove();\n        if (USERS_PAGER) USERS_PAGER.render();\n        alert(\"User deleted.\");\n\n      } else if (act === \"role\") {\n        const row = document.querySelector('tr[data-user-email=\"' + CSS.escape(email) + '\"]');\n        if (!row) throw new Error(\"Row not found\");\n\n        const roleSel = row.querySelector('select[data-sel=\"role\"]');\n        const new_role = roleSel ? String(roleSel.value || \"\").toUpperCase() : \"\";\n\n        let supervisor_email = \"\";\n        if (new_role === \"EMPLOYEE\") {\n          const roleSup = row.querySelector('select[data-sel=\"roleSup\"]');\n          supervisor_email = roleSup ? normEmail(roleSup.value || \"\") : \"\";\n          if (!supervisor_email) {\n            alert(\"Supervisor is required when setting role to EMPLOYEE.\");\n            btn.disabled = false;\n            return;\n          }\n        }\n\n        const { data } = await postJSON(ENDPOINTS.role, { token: TOKEN, email, new_role, supervisor_email });\n\n        const ok =\n          !data\n            ? true\n            : (\n                isTrue(data.ok) ||\n                isTrue(data.success) ||\n                isTrue(data.updated) ||\n                (\n                  typeof data.ok === \"undefined\" &&\n                  (!(\"not_self\" in data) || String(data.not_self).toLowerCase() !== \"false\") &&\n                  (!(\"user_exists\" in data) || String(data.user_exists).toLowerCase() !== \"false\") &&\n                  (!(\"role_ok\" in data) || String(data.role_ok).toLowerCase() !== \"false\") &&\n                  (new_role !== \"EMPLOYEE\" || !(\"supervisor_ok\" in data) || String(data.supervisor_ok).toLowerCase() !== \"false\")\n                )\n              );\n\n        if (!ok) throw new Error(explainRoleUpdateFail(data));\n\n        const nr = String(data && (data.new_role || data.role) ? (data.new_role || data.role) : new_role).toUpperCase();\n        const ns =\n          nr === \"EMPLOYEE\"\n            ? normEmail(\n                data && typeof data.new_supervisor_email !== \"undefined\"\n                  ? String(data.new_supervisor_email || \"\")\n                  : supervisor_email\n              )\n            : \"\";\n\n        setRowRoleUI(email, nr, ns);\n        alert(\"Updated.\");\n      }\n\n    } catch (err) {\n      alert(String(err && err.message ? err.message : err));\n    } finally {\n      btn.disabled = false;\n    }\n  };\n\n  document.addEventListener(\"click\", onClick);\n  </script>\n</body>\n</html>`;\n\nreturn [{ json: { html } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1712,
+        -368
+      ],
+      "id": "dcaabec7-527d-4b99-ac7c-6055d25083db",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{$json.html}}\n",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1936,
+        -368
+      ],
+      "id": "39b19c0a-85aa-4ffe-a205-44f4b7dff17c",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0af9bb3a-c5dd-459d-ae69-0d4200385350",
+              "name": "token",
+              "value": "={{ ($json.query.token || '').replace(/^\"+|\"+$/g, '').replace(/\\\\\"/g, '').trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -384,
+        0
+      ],
+      "id": "296f9789-e26a-4094-8cb6-367fb1855eaa",
+      "name": "Normalize Token"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH u AS (\n  SELECT email, role\n  FROM users\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n  LIMIT 1\n),\nslide AS (\n  UPDATE users\n  SET token_expires_at = NOW() + INTERVAL '30 minutes'\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n    AND EXISTS (SELECT 1 FROM u)\n  RETURNING 1\n)\nSELECT\n  $1 AS token,\n  (u.email IS NOT NULL) AS token_valid,\n  COALESCE(u.email, '') AS email,\n  COALESCE(u.role, '') AS role\nFROM (SELECT 1) dummy\nLEFT JOIN u ON true\nLIMIT 1;\n",
+        "options": {
+          "queryReplacement": "={{$json.token}}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -160,
+        0
+      ],
+      "id": "d915a1f0-64ba-49f9-8e2f-e10490b3412b",
+      "name": "Validate Token + Refresh Expiry",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c9a9c0b6-4f12-4243-b7d9-2ba1c41c3b74",
+              "leftValue": "={{$json.token}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        64,
+        0
+      ],
+      "id": "b5c9ee70-c671-48c0-8e26-bb5198aeae59",
+      "name": "Token Provided?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH u AS (\n  SELECT email, role, name\n  FROM users\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n  LIMIT 1\n),\nslide AS (\n  UPDATE users\n  SET token_expires_at = NOW() + INTERVAL '30 minutes'\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n    AND EXISTS (SELECT 1 FROM u)\n  RETURNING 1\n)\nSELECT\n  $1 AS token,\n  (u.email IS NOT NULL) AS token_valid,\n  COALESCE(u.role, '') AS role,\n  COALESCE(u.email, '') AS email,\n  COALESCE(u.name, '') AS name\nFROM (SELECT 1) dummy\nLEFT JOIN u ON true\nLIMIT 1;\n",
+        "options": {
+          "queryReplacement": "={{$json.token}}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        368,
+        -16
+      ],
+      "id": "5a51372f-b057-40ba-b688-0adf7634bd35",
+      "name": "Validate Token + Refresh Expiry1",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5d3cec2a-dd2a-4ac1-8465-6a034f2dee84",
+              "leftValue": "={{$json.token_valid}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "d5cdb2a8-e784-4daa-bff0-e33418d50ae2",
+              "leftValue": "={{$json.role}}",
+              "rightValue": "=ADMIN",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        608,
+        -16
+      ],
+      "id": "97960237-5573-4330-8160-a021c3555dfe",
+      "name": "Validate Admin Access"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  $1 AS token,\n  COALESCE(u.email,'') AS email,\n  COALESCE(u.name,'') AS name,\n  COALESCE(u.role,'') AS role,\n  (SELECT COUNT(*) FROM users) AS users_total,\n  (SELECT COUNT(*) FROM users WHERE active = true) AS users_active,\n  (SELECT COUNT(*) FROM users WHERE active = true AND role = 'EMPLOYEE') AS employees_active,\n  (SELECT COUNT(*) FROM users WHERE active = true AND role = 'SUPERVISOR') AS supervisors_active,\n  (SELECT COUNT(*) FROM claims) AS claims_total,\n  (SELECT COUNT(*) FROM claims WHERE status IN ('SUBMITTED','PENDING')) AS claims_pending,\n  (SELECT COUNT(*) FROM claims WHERE status='APPROVED') AS claims_approved,\n  (SELECT COUNT(*) FROM claims WHERE status IN ('DECLINED','REJECTED')) AS claims_declined\nFROM users u\nWHERE u.token = $1\n  AND u.active = true\nLIMIT 1;\n",
+        "options": {
+          "queryReplacement": "={{$json.token}}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        944,
+        -592
+      ],
+      "id": "3ad6515b-aa98-4de5-8525-4b6eb9863427",
+      "name": "Load Admin Dashboard Stats",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  u.email,\n  u.name,\n  u.role,\n  u.active,\n  u.supervisor_email,\n  COALESCE(s.name,'') AS supervisor_name,\n  u.token\nFROM users u\nLEFT JOIN users s ON s.email = u.supervisor_email\nORDER BY\n  u.active DESC,\n  u.role ASC,\n  u.name ASC;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        944,
+        -384
+      ],
+      "id": "4beca951-06ee-455a-a9f1-f0dd9f89db47",
+      "name": "Load Users",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  c.claim_id,\n  c.employee_email,\n  COALESCE(e.name,'') AS employee_name,\n  c.approver_email,\n  COALESCE(a.name,'') AS approver_name,\n  c.amount,\n  c.currency,\n  c.category,\n  c.merchant,\n  c.status,\n  c.submitted_at,\n  c.approved_at,\n  c.decision_notes\nFROM claims c\nLEFT JOIN users e ON e.email = c.employee_email\nLEFT JOIN users a ON a.email = c.approver_email\nORDER BY c.submitted_at DESC\nLIMIT 100;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        944,
+        -176
+      ],
+      "id": "0ee2c29b-6ade-40e8-95b3-054688d2349d",
+      "name": "Load Claims",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Token": {
+      "main": [
+        [
+          {
+            "node": "Validate Token + Refresh Expiry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Token + Refresh Expiry": {
+      "main": [
+        [
+          {
+            "node": "Token Provided?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Provided?": {
+      "main": [
+        [
+          {
+            "node": "Validate Token + Refresh Expiry1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Token + Refresh Expiry1": {
+      "main": [
+        [
+          {
+            "node": "Validate Admin Access",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Admin Access": {
+      "main": [
+        [
+          {
+            "node": "Load Admin Dashboard Stats",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Load Users",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Load Claims",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Admin Dashboard Stats": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Users": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Load Claims": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "04b1c0bd-9522-4fec-ab9c-fe34b8457e54",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ed78ae6e681edbfae313d0e8063f75c68ae48b9e68d4728e17cb5150634a5de7"
+  },
+  "id": "-aKKCBkHPCZvbA6-av0Jw",
+  "tags": []
+}

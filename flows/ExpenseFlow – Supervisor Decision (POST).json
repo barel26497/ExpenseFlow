@@ -1,0 +1,322 @@
+{
+  "name": "ExpenseFlow – Supervisor Decision (POST)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "expenseflow/supervisor/decision",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -608,
+        -48
+      ],
+      "id": "9a2ae530-7312-4b76-ad8e-1ff683c2473b",
+      "name": "Webhook",
+      "webhookId": "3d798b55-db4b-410e-afcd-e449883736cb"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -32,
+        -256
+      ],
+      "id": "faa7d29b-0a6e-4001-857b-5b77cc4e2ab0",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "respondWith": "redirect",
+        "redirectURL": "=http://localhost:5678/webhook/app/expenseflow/supervisor/dashboard?token={{$json.token}}",
+        "options": {
+          "responseCode": 302
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        864,
+        -352
+      ],
+      "id": "f4ceb4ab-36e1-4749-868e-580c9c3d853f",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        688,
+        256
+      ],
+      "id": "27381e7d-c091-46d5-aefa-1af8cca0ed0c",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!doctype html>\n<html>\n  <body>\n    <script>\n      alert(\"Access denied. Admins only.\");\n      window.location.href = \"http://localhost:5678/webhook/app/expenseflow/supervisor/dashboard?token={{$json.token}}\";\n    </script>\n  </body>\n</html>\n",
+        "options": {
+          "responseCode": 401,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        384,
+        -96
+      ],
+      "id": "0c51e01e-b7cf-4fde-a016-9c1cec11c170",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const q = $json?.query || {};\nconst b = $json?.body || {};\n\nconst token = (q.token || b.token || \"\").toString().trim();\nconst claim_id = (q.claim_id || b.claim_id || \"\").toString().trim();\nconst actionRaw = (q.action || b.action || \"\").toString().trim().toUpperCase();\nconst decision_notes = (q.decision_notes || b.decision_notes || \"\").toString().trim();\n\nconst status =\n  actionRaw === \"APPROVED\" ? \"APPROVED\" :\n  (actionRaw === \"REJECTED\" || actionRaw === \"DECLINED\") ? \"REJECTED\" :\n  \"\";\n\nreturn [{\n  json: {\n    token,\n    claim_id,\n    status,\n    decision_notes\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        -48
+      ],
+      "id": "e62f70dc-d66c-47cc-8a07-29f1bd2f0506",
+      "name": "Normalize Supervisor Decision Input"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH u AS (\n  SELECT email, role\n  FROM users\n  WHERE token = $1\n    AND active = true\n    AND role = 'SUPERVISOR'\n    AND token_expires_at > NOW()\n  LIMIT 1\n),\nslide AS (\n  UPDATE users\n  SET token_expires_at = NOW() + INTERVAL '30 minutes'\n  WHERE token = $1\n    AND active = true\n    AND role = 'SUPERVISOR'\n    AND token_expires_at > NOW()\n    AND EXISTS (SELECT 1 FROM u)\n  RETURNING 1\n)\nSELECT\n  (u.email IS NOT NULL) AS allowed,\n  COALESCE(u.email, '') AS email,\n  COALESCE(u.role, '') AS role\nFROM (SELECT 1) dummy\nLEFT JOIN u ON true;\n",
+        "options": {
+          "queryReplacement": "={{$json.token}}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -768,
+        -304
+      ],
+      "id": "634920d6-113d-4518-846e-f42680a46df5",
+      "name": "Validate Supervisor Token",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0ef17691-d9d2-4049-9a73-771335aa83f5",
+              "leftValue": "={{$json.allowed}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        176,
+        -256
+      ],
+      "id": "0dcfbcfd-24b4-4da3-ba27-61b6bf55bc19",
+      "name": "Supervisor Authorized"
+    },
+    {
+      "parameters": {
+        "jsCode": "const q = $json.query || {};\nconst b = $json.body || {};\nconst pick = (k) => (q[k] ?? b[k] ?? $json[k]);\n\nconst token = (pick(\"token\") ?? \"\").toString().trim();\nconst claim_id = (pick(\"claim_id\") ?? \"\").toString().trim();\n\nlet status = (pick(\"status\") ?? pick(\"action\") ?? \"\")\n  .toString()\n  .trim()\n  .toUpperCase();\n\nif (status === \"DECLINED\") status = \"REJECTED\";\n\nconst decision_notes = (pick(\"decision_notes\") ?? \"\").toString();\n\n\nconst approver_email =\n  (pick(\"email\") ?? \"\").toString();\n\nreturn [{\n  token,\n  claim_id,\n  status,\n  decision_notes,\n  email: (approver_email || \"\").toLowerCase()\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        -352
+      ],
+      "id": "03b7ca69-0339-4527-b328-bff6e430a3f0",
+      "name": "Normalize Decision Update Payload"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE claims\nSET\n  status = $1,\n  approved_at = NOW(),\n  decision_notes = NULLIF(TRIM($2), '')\nWHERE claim_id = $3::uuid\n  AND LOWER(approver_email) = LOWER($4)\nRETURNING claim_id, status, approved_at, approver_email;\n",
+        "options": {
+          "queryReplacement": "={{$json.status}}\n{{ ($json.decision_notes ?? '').toString().trim() || ' ' }}\n{{$json.claim_id}}\n{{$json.email}}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        592,
+        -352
+      ],
+      "id": "7006e444-fe44-45e6-a7e8-8f83bbac93b9",
+      "name": "Update Claim Status",
+      "alwaysOutputData": false,
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Supervisor Decision Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Supervisor Authorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Supervisor Decision Input": {
+      "main": [
+        [
+          {
+            "node": "Validate Supervisor Token",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Supervisor Token": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Supervisor Authorized": {
+      "main": [
+        [
+          {
+            "node": "Normalize Decision Update Payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Decision Update Payload": {
+      "main": [
+        [
+          {
+            "node": "Update Claim Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Claim Status": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "3eddc9ce-0470-4275-b781-71180edefa51",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ed78ae6e681edbfae313d0e8063f75c68ae48b9e68d4728e17cb5150634a5de7"
+  },
+  "id": "ZIPUZLZ4WdDODaSyzJBvK",
+  "tags": []
+}

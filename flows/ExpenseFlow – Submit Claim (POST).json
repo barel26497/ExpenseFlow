@@ -1,0 +1,467 @@
+{
+  "name": "ExpenseFlow – Submit Claim (POST)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "expenseflow/submit",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -416,
+        0
+      ],
+      "id": "b70a29e6-894b-4a55-b838-0bafc0243d3c",
+      "name": "Webhook",
+      "webhookId": "75dc5612-570e-4641-a97b-e8b54b12df76"
+    },
+    {
+      "parameters": {
+        "respondWith": "redirect",
+        "redirectURL": "=http://localhost:5678/webhook/app/expenseflow/employee/dashboard?token={{$json.token}}",
+        "options": {
+          "responseCode": 302
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        880,
+        -320
+      ],
+      "id": "0e5e4980-62c5-403e-a995-99285e442215",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <title>403 – Access Denied</title>\n\n    <style>\n      :root {\n        --bg: #f5f7fb;\n        --card: #ffffff;\n        --text: #1f2937;\n        --muted: #6b7280;\n        --accent: #ef4444;\n      }\n\n      * {\n        box-sizing: border-box;\n      }\n\n      body {\n        margin: 0;\n        min-height: 100vh;\n        font-family: system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n          Roboto, sans-serif;\n        background: var(--bg);\n        display: flex;\n        align-items: center;\n        justify-content: center;\n        padding: 24px;\n        color: var(--text);\n      }\n\n      .card {\n        background: var(--card);\n        padding: 36px 40px;\n        border-radius: 16px;\n        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.08);\n        text-align: center;\n        max-width: 420px;\n        width: 100%;\n      }\n\n      .code {\n        font-size: 3.2rem;\n        font-weight: 800;\n        color: var(--accent);\n        margin-bottom: 8px;\n      }\n\n      h1 {\n        font-size: 1.5rem;\n        margin: 0 0 10px;\n      }\n\n      p {\n        margin: 0;\n        color: var(--muted);\n        font-size: 0.95rem;\n        line-height: 1.5;\n      }\n    </style>\n  </head>\n\n  <body>\n    <div class=\"card\">\n      <div class=\"code\">403</div>\n      <h1>Access denied</h1>\n      <p>Token Is Invalid.</p>\n    </div>\n  </body>\n</html>\n",
+        "options": {
+          "responseCode": 403,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        464,
+        208
+      ],
+      "id": "1110a011-d7af-4964-8477-d620d772c86e",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        144,
+        -256
+      ],
+      "id": "75b7db55-d01e-49b9-8ed5-e94bb8b4b5fd",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        576,
+        -320
+      ],
+      "id": "c05eb727-c0c7-4651-8c22-51bea99cd016",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $json.body || {};\n\n// token arrives on the POST request query string: ?token=...\nconst token = ($json.query && $json.query.token ? String($json.query.token) : \"\").trim();\n\nfunction s(x) { return (x ?? '').toString().trim(); }\nfunction n(x) {\n  const v = parseFloat((x ?? '').toString());\n  return Number.isFinite(v) ? v : 0;\n}\n\nconst employee_name = s(b.employee_name);\nconst employee_email = s(b.employee_email);\nconst category = s(b.category);\nconst amount = n(b.amount);\nconst currency = s(b.currency);\nconst merchant = s(b.merchant);\nconst description = s(b.description);\nconst receipt_url = s(b.receipt_url);\n\nconst submitted_at = new Date().toISOString();\n\nreturn [{\n  json: {                 \n    token,                \n    employee_name,\n    employee_email,\n    category,\n    amount,\n    currency,\n    merchant,\n    description,\n    receipt_url,\n    submitted_at,\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -176,
+        0
+      ],
+      "id": "1c8131cf-06f7-4bb3-9141-461a6259e64e",
+      "name": "Normalize Claim Submission"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH u AS (\n  SELECT email, role, supervisor_email\n  FROM users\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n  LIMIT 1\n),\nslide AS (\n  UPDATE users\n  SET token_expires_at = NOW() + INTERVAL '30 minutes'\n  WHERE token = $1\n    AND active = true\n    AND token_expires_at > NOW()\n    AND EXISTS (SELECT 1 FROM u)\n  RETURNING 1\n)\nSELECT\n  COALESCE(u.email, '') AS email,\n  COALESCE(u.role, '') AS role,\n  COALESCE(u.supervisor_email, '') AS supervisor_email\nFROM (SELECT 1) dummy\nLEFT JOIN u ON true\nLIMIT 1;\n",
+        "options": {
+          "queryReplacement": "={{$json.token}}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        32,
+        0
+      ],
+      "id": "52c25b1b-388d-43eb-96d6-a19124f61208",
+      "name": "Validate Token + Load User (Supervisor Email)",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "22e89a36-5594-407c-bec0-7e935c5dd0db",
+              "leftValue": "={{$json.email}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "9237e68b-fa47-4d39-903b-bbd3968ee2bb",
+      "name": "User Found"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "claims",
+          "mode": "list",
+          "cachedResultName": "claims"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "amount": "={{$json.amount}}",
+            "employee_name": "={{$json.employee_name}}",
+            "submitted_at": "={{$json.submitted_at}}",
+            "employee_email": "={{$json.employee_email}}",
+            "category": "={{$json.category}}",
+            "currency": "={{$json.currency}}",
+            "merchant": "={{$json.merchant}}",
+            "description": "={{$json.description}}",
+            "receipt_url": "={{$json.receipt_url}}",
+            "approved_at": "={{$json.approved_at ? $json.approved_at : null}}",
+            "status": "PENDING",
+            "approver_email": "={{$json.supervisor_email}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "claim_id",
+              "displayName": "claim_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "submitted_at",
+              "displayName": "submitted_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "employee_email",
+              "displayName": "employee_email",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "employee_name",
+              "displayName": "employee_name",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "amount",
+              "displayName": "amount",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "currency",
+              "displayName": "currency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "merchant",
+              "displayName": "merchant",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "receipt_url",
+              "displayName": "receipt_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "route",
+              "displayName": "route",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "approver_email",
+              "displayName": "approver_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "approved_at",
+              "displayName": "approved_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "decision_notes",
+              "displayName": "decision_notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        448,
+        -16
+      ],
+      "id": "e3c92e68-6fa0-415d-8939-31851e0006d2",
+      "name": "Insert Claim",
+      "credentials": {
+        "postgres": {
+          "id": "Rh1n4180I2tofWKO",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Claim Submission",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "User Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Claim Submission": {
+      "main": [
+        [
+          {
+            "node": "Validate Token + Load User (Supervisor Email)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Token + Load User (Supervisor Email)": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "User Found": {
+      "main": [
+        [
+          {
+            "node": "Insert Claim",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Claim": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "7ed099f7-37df-4c95-afd6-b791c8b98f62",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ed78ae6e681edbfae313d0e8063f75c68ae48b9e68d4728e17cb5150634a5de7"
+  },
+  "id": "O1BKt4t-kZYD5ueEHm73a",
+  "tags": []
+}
