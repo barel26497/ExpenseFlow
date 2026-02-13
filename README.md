@@ -3,10 +3,10 @@ PostgreSQL + Docker**.
 
 It demonstrates:
 
--   Token-based authentication\
--   Role-Based Access Control (ADMIN / SUPERVISOR / EMPLOYEE)\
--   Structured relational schema with constraints & indexes\
--   Deterministic Docker startup with automatic DB bootstrapping\
+-   Token-based authentication
+-   Role-Based Access Control (ADMIN / SUPERVISOR / EMPLOYEE)
+-   Structured relational schema with constraints & indexes
+-   Deterministic Docker startup with automatic DB bootstrapping
 -   Clean separation between workflow logic and persistence
 
 The entire environment runs locally using Docker.
@@ -61,8 +61,8 @@ http://localhost:5678
 
 The system automatically creates a default admin user (if missing):
 
-Email: admin@local\
-Password: Admin123!\
+Email: admin@local
+Password: Admin123!
 Role: ADMIN
 
 ------------------------------------------------------------------------
@@ -92,10 +92,10 @@ Inside the n8n UI:
 
 Use the following configuration:
 
-Host: postgres\
-Database: expenseflow\
-User: expenseflow\
-Password: expenseflow\
+Host: postgres
+Database: expenseflow
+User: expenseflow
+Password: expenseflow
 Port: 5432
 
 
