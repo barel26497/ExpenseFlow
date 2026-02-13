@@ -15,6 +15,7 @@ The entire environment runs locally using Docker.
 
 ## Architecture
 
+```text
 Docker Compose
 │
 ├── postgres (PostgreSQL 16)
@@ -25,6 +26,8 @@ Docker Compose
 │
 └── n8n
       └── Hosts workflow logic and UI
+```
+
 
 
 When running `docker compose up`:
