@@ -81,9 +81,11 @@ http://localhost:5678
 
 The system automatically creates a default admin user (if missing):
 
+```text
 Email: admin@local
 Password: Admin123!
 Role: ADMIN
+```
 
 ------------------------------------------------------------------------
 
@@ -112,11 +114,13 @@ Inside the n8n UI:
 
 Use the following configuration:
 
+```text
 Host: postgres
 Database: expenseflow
 User: expenseflow
 Password: expenseflow
 Port: 5432
+```
 
 
 Explanation:
