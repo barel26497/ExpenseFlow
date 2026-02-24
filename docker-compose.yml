@@ -38,8 +38,13 @@ services:
     volumes:
       - ./db/bootstrap:/bootstrap:ro
     command: >
-      sh -c "
+      sh -lc "
+        set -e;
         echo 'Running DB preflight...';
+        until pg_isready -h postgres -U expenseflow -d expenseflow; do
+          echo 'Waiting for postgres...';
+          sleep 1;
+        done;
         psql -h postgres -U expenseflow -d expenseflow -v ON_ERROR_STOP=1 -f /bootstrap/001_expenseflow_bootstrap.sql;
         echo 'DB preflight done.';
       "
